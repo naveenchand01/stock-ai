@@ -27,7 +27,7 @@ export function Header() {
             <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
               <span className="text-primary-foreground font-bold text-sm">AI</span>
             </div>
-            <span className="font-semibold text-lg hidden sm:block">MarketAI</span>
+            <span className="font-semibold text-lg hidden sm:block">Stock AI</span>
           </Link>
 
           {/* Desktop Navigation */}
