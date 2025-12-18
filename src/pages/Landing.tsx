@@ -14,7 +14,7 @@ const Landing = () => {
               <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-sm">AI</span>
               </div>
-              <span className="font-semibold text-lg">MarketAI</span>
+              <span className="font-semibold text-lg">Stock AI</span>
             </Link>
             <div className="flex items-center gap-4">
               <Button variant="ghost" asChild>
@@ -42,8 +42,8 @@ const Landing = () => {
               transition={{ duration: 0.6 }}
             >
               <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
-                Your <span className="gradient-text">AI Avatar</span> for Real-Time{" "}
-                <span className="gradient-text">Market Intelligence</span>
+                <span className="gradient-text">AI-Driven Avatar System</span> for Real-Time{" "}
+                <span className="gradient-text">Stock Market News Presentation</span>
               </h1>
               <p className="text-lg md:text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
                 Forecast. Narrate. Personalize Your Finance. Experience market insights
@@ -198,9 +198,22 @@ const Landing = () => {
       </section>
 
       {/* Footer */}
-      <footer className="py-8 border-t border-border/50">
-        <div className="container mx-auto px-4 text-center text-sm text-muted-foreground">
-          <p>© 2024 MarketAI. For informational purposes only. Not financial advice.</p>
+      <footer className="py-12 border-t border-border/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <h3 className="text-lg font-semibold mb-2">Group 4</h3>
+            <p className="text-sm text-muted-foreground mb-6">Team Members</p>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-4xl mx-auto">
+              {["Naveen Chand", "Pratham Singh", "Suman Mandal", "Lokesh Ghosh", "Riya Singh", "Santanu Ghosh"].map((member) => (
+                <div key={member} className="glass-card p-3 rounded-lg">
+                  <p className="text-sm font-medium">{member}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="text-center text-sm text-muted-foreground">
+            <p>© 2024 Stock AI. For informational purposes only. Not financial advice.</p>
+          </div>
         </div>
       </footer>
     </div>
