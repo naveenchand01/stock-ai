@@ -4,20 +4,68 @@ import { IndexCard } from "@/components/market/IndexCard";
 import { MiniChart } from "@/components/market/MiniChart";
 import { InsightCard } from "@/components/insights/InsightCard";
 import { Button } from "@/components/ui/button";
-import { 
-  watchlistStocks, 
-  marketIndices, 
-  topGainers, 
-  topLosers, 
-  highVolume,
-  generateChartData 
-} from "@/data/mockData";
+import { generateChartData } from "@/data/mockData";
+import { useWatchlistStocks, useMarketIndices, useTopGainers, useTopLosers, useHighVolume } from "@/hooks/useStocks";
 import { TrendingUp, TrendingDown, BarChart3, Plus, MessageSquare, Sparkles } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 
 const Dashboard = () => {
+  // Watchlist symbols - can be made dynamic later (e.g., from user preferences)
+  const watchlistSymbols = ['TCS', 'INFY', 'RELIANCE', 'HDFCBANK', 'ICICIBANK', 'WIPRO'];
+
+  // Fetch data using React Query hooks
+  const { data: watchlistStocks = [], isLoading: loadingWatchlist, error: watchlistError } = useWatchlistStocks(watchlistSymbols);
+  const { data: marketIndices = [], isLoading: loadingIndices } = useMarketIndices();
+  const { data: topGainers = [], isLoading: loadingGainers } = useTopGainers();
+  const { data: topLosers = [] } = useTopLosers();
+  const { data: highVolume = [] } = useHighVolume();
+
   const intradayData = generateChartData(50, "volatile");
+
+  // Loading state
+  if (loadingWatchlist || loadingIndices || loadingGainers) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card p-8 rounded-2xl"
+          >
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 border-2 border-primary animate-pulse-glow flex items-center justify-center">
+              <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+            <p className="text-muted-foreground text-center">Loading market data...</p>
+          </motion.div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Error state
+  if (watchlistError) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card p-8 rounded-2xl text-center"
+          >
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/20 border-2 border-destructive flex items-center justify-center">
+              <TrendingDown className="h-8 w-8 text-destructive" />
+            </div>
+            <h3 className="font-semibold mb-2">Failed to load market data</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Please check if the backend server is running on port 3001
+            </p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </motion.div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>

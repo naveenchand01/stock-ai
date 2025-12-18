@@ -2,10 +2,10 @@ import { DashboardLayout } from "@/components/layout/DashboardLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { watchlistStocks } from "@/data/mockData";
-import { Plus, Trash2, Bell, Mail, MessageSquare, Save } from "lucide-react";
+import { useWatchlistStocks } from "@/hooks/useStocks";
+import { Plus, Trash2, Bell, Mail, MessageSquare, Save, TrendingDown } from "lucide-react";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface AlertConfig {
   symbol: string;
@@ -17,16 +17,29 @@ interface AlertConfig {
 }
 
 const Watchlist = () => {
-  const [alerts, setAlerts] = useState<AlertConfig[]>(
-    watchlistStocks.slice(0, 4).map((stock) => ({
-      symbol: stock.symbol,
-      priceAlert: true,
-      volumeSpike: true,
-      negativeSentiment: false,
-      analystDowngrade: false,
-      priceThreshold: stock.price,
-    }))
-  );
+  // Watchlist symbols - can be made dynamic later
+  const watchlistSymbols = ['TCS', 'INFY', 'RELIANCE', 'HDFCBANK'];
+
+  // Fetch watchlist stocks using React Query
+  const { data: watchlistStocks = [], isLoading, error } = useWatchlistStocks(watchlistSymbols);
+
+  const [alerts, setAlerts] = useState<AlertConfig[]>([]);
+
+  // Initialize alerts when stocks data is loaded
+  useEffect(() => {
+    if (watchlistStocks.length > 0 && alerts.length === 0) {
+      setAlerts(
+        watchlistStocks.map((stock) => ({
+          symbol: stock.symbol,
+          priceAlert: true,
+          volumeSpike: true,
+          negativeSentiment: false,
+          analystDowngrade: false,
+          priceThreshold: stock.price,
+        }))
+      );
+    }
+  }, [watchlistStocks, alerts.length]);
 
   const toggleAlert = (symbol: string, field: keyof AlertConfig) => {
     setAlerts(alerts.map((alert) =>
@@ -35,6 +48,50 @@ const Watchlist = () => {
         : alert
     ));
   };
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card p-8 rounded-2xl"
+          >
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/20 border-2 border-primary animate-pulse-glow flex items-center justify-center">
+              <div className="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin" />
+            </div>
+            <p className="text-muted-foreground text-center">Loading watchlist...</p>
+          </motion.div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <DashboardLayout>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="glass-card p-8 rounded-2xl text-center"
+          >
+            <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-destructive/20 border-2 border-destructive flex items-center justify-center">
+              <TrendingDown className="h-8 w-8 text-destructive" />
+            </div>
+            <h3 className="font-semibold mb-2">Failed to load watchlist</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Please check if the backend server is running on port 3001
+            </p>
+            <Button onClick={() => window.location.reload()}>Retry</Button>
+          </motion.div>
+        </div>
+      </DashboardLayout>
+    );
+  }
 
   return (
     <DashboardLayout>
