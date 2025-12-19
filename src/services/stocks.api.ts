@@ -1,5 +1,5 @@
 import { apiClient } from './api';
-import type { Stock, MarketIndex, TopStock } from '@/types/stock.types';
+import type { Stock, MarketIndex, TopStock, HistoricalData } from '@/types/stock.types';
 
 export const stocksApi = {
   /**
@@ -42,5 +42,16 @@ export const stocksApi = {
    */
   getMarketIndices: async (): Promise<MarketIndex[]> => {
     return apiClient.get('/indices');
+  },
+
+  /**
+   * Get historical data for a stock
+   */
+  getHistoricalData: async (
+    symbol: string,
+    period: string = '1mo',
+    interval: string = '1d'
+  ): Promise<HistoricalData[]> => {
+    return apiClient.get(`/stocks/historical/${symbol}?period=${period}&interval=${interval}`);
   },
 };

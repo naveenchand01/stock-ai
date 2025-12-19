@@ -1,11 +1,9 @@
-import { growwApi } from './growwApi.service';
+import { yahooFinanceApi } from './yahooFinance.service';
 import { cacheService } from './cache.service';
-import { getStockMapping, getIndexMapping, isRealStock, STOCK_MAPPINGS, MARKET_INDICES } from '../config/symbols';
+import { getStockMapping, getIndexMapping, STOCK_MAPPINGS, MARKET_INDICES } from '../config/symbols';
 import {
-  transformGrowwQuoteToStock,
-  transformGrowwIndexToMarketIndex,
-  generateMockStock,
-  generateMockIndex,
+  transformYahooQuoteToStock,
+  transformYahooIndexToMarketIndex,
   Stock,
   MarketIndex,
 } from '../utils/dataTransform';
@@ -29,22 +27,11 @@ class StocksService {
       throw new Error(`Unknown stock symbol: ${symbol}`);
     }
 
-    // If it's a mock stock, generate mock data
-    if (mapping.isMock) {
-      const mockStock = generateMockStock(symbol);
-      cacheService.set(cacheKey, mockStock, 60); // Cache for 60 seconds
-      return mockStock;
-    }
-
-    // Fetch real data from Groww API
+    // Fetch real data from Yahoo Finance API
     try {
-      const data = await growwApi.getQuote(
-        mapping.exchange,
-        mapping.segment,
-        mapping.tradingSymbol
-      );
+      const data = await yahooFinanceApi.getQuote(mapping.yahooSymbol);
 
-      const stock = transformGrowwQuoteToStock(data);
+      const stock = transformYahooQuoteToStock(data, mapping.displaySymbol, mapping.name);
       cacheService.set(cacheKey, stock, 60); // Cache for 60 seconds
       return stock;
     } catch (error) {
@@ -57,9 +44,48 @@ class StocksService {
    * Get quotes for multiple stocks (batch request)
    */
   async getBatch(symbols: string[]): Promise<Stock[]> {
-    // Process in parallel
-    const promises = symbols.map((symbol) => this.getQuote(symbol));
-    return Promise.all(promises);
+    try {
+      // Map symbols to Yahoo Finance symbols
+      const yahooSymbols = symbols
+        .map((symbol) => {
+          const mapping = getStockMapping(symbol);
+          return mapping ? { original: symbol, yahoo: mapping.yahooSymbol, mapping } : null;
+        })
+        .filter((item): item is NonNullable<typeof item> => item !== null);
+
+      if (yahooSymbols.length === 0) {
+        return [];
+      }
+
+      // Fetch all quotes in batch from Yahoo Finance
+      const yahooQuotesResult = await yahooFinanceApi.getQuotes(yahooSymbols.map((s) => s.yahoo));
+
+      // yahooFinance.quote() returns an array when passed an array of symbols
+      const yahooQuotes = Array.isArray(yahooQuotesResult) ? yahooQuotesResult : [yahooQuotesResult];
+
+      // Transform the results
+      const stocks: Stock[] = [];
+      for (let i = 0; i < yahooQuotes.length; i++) {
+        const quote = yahooQuotes[i];
+        const { original, mapping } = yahooSymbols[i];
+
+        try {
+          const stock = transformYahooQuoteToStock(quote, mapping.displaySymbol, mapping.name);
+          stocks.push(stock);
+
+          // Cache individual stock
+          const cacheKey = `quote:${original}`;
+          cacheService.set(cacheKey, stock, 60);
+        } catch (error) {
+          logger.error(`Failed to transform quote for ${original}:`, error);
+        }
+      }
+
+      return stocks;
+    } catch (error) {
+      logger.error('Failed to fetch batch quotes:', error);
+      throw error;
+    }
   }
 
   /**
@@ -175,31 +201,104 @@ class StocksService {
       return cached;
     }
 
-    const indices: MarketIndex[] = [];
+    try {
+      // Get all index symbols from MARKET_INDICES
+      const indexNames = Object.keys(MARKET_INDICES);
+      const yahooSymbols = indexNames.map((name) => {
+        const mapping = getIndexMapping(name);
+        return mapping ? { name, yahoo: mapping.yahooSymbol, displayName: mapping.displayName } : null;
+      }).filter((item): item is NonNullable<typeof item> => item !== null);
 
-    // Fetch Indian indices from Groww
-    const indianIndices = ['NIFTY 50', 'SENSEX', 'BANKNIFTY'];
-    for (const indexName of indianIndices) {
-      const mapping = getIndexMapping(indexName);
-      if (mapping && mapping.exchange !== 'MOCK') {
+      // Fetch all indices in batch
+      const yahooQuotesResult = await yahooFinanceApi.getQuotes(yahooSymbols.map((s) => s.yahoo));
+
+      // yahooFinance.quote() returns an array when passed an array of symbols
+      const yahooQuotes = Array.isArray(yahooQuotesResult) ? yahooQuotesResult : [yahooQuotesResult];
+
+      // Transform the results
+      const indices: MarketIndex[] = [];
+      for (let i = 0; i < yahooQuotes.length; i++) {
+        const quote = yahooQuotes[i];
+        const { displayName } = yahooSymbols[i];
+
         try {
-          const data = await growwApi.getQuote(mapping.exchange, 'CASH', mapping.tradingSymbol);
-          const index = transformGrowwIndexToMarketIndex(data, mapping.displayName);
+          const index = transformYahooIndexToMarketIndex(quote, displayName);
           indices.push(index);
         } catch (error) {
-          logger.error(`Failed to fetch index ${indexName}:`, error);
+          logger.error(`Failed to transform index ${displayName}:`, error);
         }
       }
+
+      cacheService.set(cacheKey, indices, 60); // Cache for 60 seconds
+      return indices;
+    } catch (error) {
+      logger.error('Failed to fetch market indices:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Get historical data for a stock
+   */
+  async getHistoricalData(symbol: string, period: string = '1mo', interval: string = '1d') {
+    const cacheKey = `historical:${symbol}:${period}:${interval}`;
+
+    // Try to get from cache
+    const cached = cacheService.get(cacheKey);
+    if (cached) {
+      return cached;
     }
 
-    // Add mock US indices
-    const usIndices = ['NASDAQ', 'S&P 500', 'DOW JONES'];
-    for (const indexName of usIndices) {
-      indices.push(generateMockIndex(indexName));
+    const mapping = getStockMapping(symbol);
+    if (!mapping) {
+      throw new Error(`Unknown stock symbol: ${symbol}`);
     }
 
-    cacheService.set(cacheKey, indices, 60); // Cache for 60 seconds
-    return indices;
+    try {
+      // Calculate date range based on period
+      const endDate = new Date();
+      const startDate = new Date();
+
+      switch (period) {
+        case '1d':
+          startDate.setDate(endDate.getDate() - 1);
+          break;
+        case '5d':
+          startDate.setDate(endDate.getDate() - 5);
+          break;
+        case '1mo':
+          startDate.setMonth(endDate.getMonth() - 1);
+          break;
+        case '3mo':
+          startDate.setMonth(endDate.getMonth() - 3);
+          break;
+        case '6mo':
+          startDate.setMonth(endDate.getMonth() - 6);
+          break;
+        case '1y':
+          startDate.setFullYear(endDate.getFullYear() - 1);
+          break;
+        case '5y':
+          startDate.setFullYear(endDate.getFullYear() - 5);
+          break;
+        default:
+          startDate.setMonth(endDate.getMonth() - 1);
+      }
+
+      const data = await yahooFinanceApi.getHistoricalData(
+        mapping.yahooSymbol,
+        startDate,
+        endDate,
+        interval as '1d' | '1wk' | '1mo'
+      );
+
+      // Cache for 5 minutes for historical data
+      cacheService.set(cacheKey, data, 300);
+      return data;
+    } catch (error) {
+      logger.error(`Failed to fetch historical data for ${symbol}:`, error);
+      throw error;
+    }
   }
 }
 

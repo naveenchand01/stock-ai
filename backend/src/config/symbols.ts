@@ -1,51 +1,53 @@
 export interface StockMapping {
-  exchange: string;
-  segment: string;
-  tradingSymbol: string;
-  isMock?: boolean;
+  yahooSymbol: string; // Yahoo Finance symbol (e.g., TCS.NS for NSE stocks, AAPL for US)
+  displaySymbol: string; // Display name for UI
+  name: string; // Company name
 }
 
 export interface IndexMapping {
-  exchange: string;
-  tradingSymbol: string;
+  yahooSymbol: string; // Yahoo Finance symbol (e.g., ^NSEI for NIFTY)
   displayName: string;
 }
 
-// Stock symbol mappings for Groww API
+// Stock symbol mappings for Yahoo Finance API
+// NSE stocks use .NS suffix, BSE stocks use .BO suffix
+// US stocks use direct symbols
 export const STOCK_MAPPINGS: Record<string, StockMapping> = {
-  // Indian Stocks (NSE)
-  'TCS': { exchange: 'NSE', segment: 'CASH', tradingSymbol: 'TCS' },
-  'INFY': { exchange: 'NSE', segment: 'CASH', tradingSymbol: 'INFY' },
-  'RELIANCE': { exchange: 'NSE', segment: 'CASH', tradingSymbol: 'RELIANCE' },
-  'HDFCBANK': { exchange: 'NSE', segment: 'CASH', tradingSymbol: 'HDFCBANK' },
-  'ICICIBANK': { exchange: 'NSE', segment: 'CASH', tradingSymbol: 'ICICIBANK' },
-  'WIPRO': { exchange: 'NSE', segment: 'CASH', tradingSymbol: 'WIPRO' },
-  'ITC': { exchange: 'NSE', segment: 'CASH', tradingSymbol: 'ITC' },
-  'SBIN': { exchange: 'NSE', segment: 'CASH', tradingSymbol: 'SBIN' },
-  'BHARTIARTL': { exchange: 'NSE', segment: 'CASH', tradingSymbol: 'BHARTIARTL' },
-  'HINDUNILVR': { exchange: 'NSE', segment: 'CASH', tradingSymbol: 'HINDUNILVR' },
+  // Indian Stocks (NSE - .NS suffix)
+  'TCS': { yahooSymbol: 'TCS.NS', displaySymbol: 'TCS', name: 'Tata Consultancy Services' },
+  'INFY': { yahooSymbol: 'INFY.NS', displaySymbol: 'INFY', name: 'Infosys Limited' },
+  'RELIANCE': { yahooSymbol: 'RELIANCE.NS', displaySymbol: 'RELIANCE', name: 'Reliance Industries' },
+  'HDFCBANK': { yahooSymbol: 'HDFCBANK.NS', displaySymbol: 'HDFCBANK', name: 'HDFC Bank' },
+  'ICICIBANK': { yahooSymbol: 'ICICIBANK.NS', displaySymbol: 'ICICIBANK', name: 'ICICI Bank' },
+  'WIPRO': { yahooSymbol: 'WIPRO.NS', displaySymbol: 'WIPRO', name: 'Wipro Limited' },
+  'ITC': { yahooSymbol: 'ITC.NS', displaySymbol: 'ITC', name: 'ITC Limited' },
+  'SBIN': { yahooSymbol: 'SBIN.NS', displaySymbol: 'SBIN', name: 'State Bank of India' },
+  'BHARTIARTL': { yahooSymbol: 'BHARTIARTL.NS', displaySymbol: 'BHARTIARTL', name: 'Bharti Airtel' },
+  'HINDUNILVR': { yahooSymbol: 'HINDUNILVR.NS', displaySymbol: 'HINDUNILVR', name: 'Hindustan Unilever' },
 
-  // US Stocks (fallback to mock data for now)
-  'AAPL': { exchange: 'MOCK', segment: 'CASH', tradingSymbol: 'AAPL', isMock: true },
-  'GOOGL': { exchange: 'MOCK', segment: 'CASH', tradingSymbol: 'GOOGL', isMock: true },
-  'MSFT': { exchange: 'MOCK', segment: 'CASH', tradingSymbol: 'MSFT', isMock: true },
-  'TSLA': { exchange: 'MOCK', segment: 'CASH', tradingSymbol: 'TSLA', isMock: true },
-  'AMZN': { exchange: 'MOCK', segment: 'CASH', tradingSymbol: 'AMZN', isMock: true },
-  'META': { exchange: 'MOCK', segment: 'CASH', tradingSymbol: 'META', isMock: true },
-  'NVDA': { exchange: 'MOCK', segment: 'CASH', tradingSymbol: 'NVDA', isMock: true },
+  // US Stocks (no suffix needed)
+  'AAPL': { yahooSymbol: 'AAPL', displaySymbol: 'AAPL', name: 'Apple Inc.' },
+  'GOOGL': { yahooSymbol: 'GOOGL', displaySymbol: 'GOOGL', name: 'Alphabet Inc.' },
+  'MSFT': { yahooSymbol: 'MSFT', displaySymbol: 'MSFT', name: 'Microsoft Corporation' },
+  'TSLA': { yahooSymbol: 'TSLA', displaySymbol: 'TSLA', name: 'Tesla Inc.' },
+  'AMZN': { yahooSymbol: 'AMZN', displaySymbol: 'AMZN', name: 'Amazon.com Inc.' },
+  'META': { yahooSymbol: 'META', displaySymbol: 'META', name: 'Meta Platforms Inc.' },
+  'NVDA': { yahooSymbol: 'NVDA', displaySymbol: 'NVDA', name: 'NVIDIA Corporation' },
 };
 
-// Market indices mappings
+// Market indices mappings for Yahoo Finance
+// Indian indices use ^, US indices use ^
 export const MARKET_INDICES: Record<string, IndexMapping> = {
-  'NIFTY 50': { exchange: 'NSE', tradingSymbol: 'NIFTY', displayName: 'NIFTY 50' },
-  'SENSEX': { exchange: 'BSE', tradingSymbol: 'SENSEX', displayName: 'SENSEX' },
-  'BANKNIFTY': { exchange: 'NSE', tradingSymbol: 'BANKNIFTY', displayName: 'BANK NIFTY' },
-  'NIFTY IT': { exchange: 'NSE', tradingSymbol: 'CNXIT', displayName: 'NIFTY IT' },
-  'FINNIFTY': { exchange: 'NSE', tradingSymbol: 'FINNIFTY', displayName: 'FIN NIFTY' },
-  // US indices - mock for now
-  'NASDAQ': { exchange: 'MOCK', tradingSymbol: 'NASDAQ', displayName: 'NASDAQ' },
-  'S&P 500': { exchange: 'MOCK', tradingSymbol: 'SPX', displayName: 'S&P 500' },
-  'DOW JONES': { exchange: 'MOCK', tradingSymbol: 'DJI', displayName: 'DOW JONES' },
+  // Indian indices
+  'NIFTY 50': { yahooSymbol: '^NSEI', displayName: 'NIFTY 50' },
+  'SENSEX': { yahooSymbol: '^BSESN', displayName: 'SENSEX' },
+  'BANKNIFTY': { yahooSymbol: '^NSEBANK', displayName: 'BANK NIFTY' },
+  'NIFTY IT': { yahooSymbol: '^CNXIT', displayName: 'NIFTY IT' },
+
+  // US indices
+  'NASDAQ': { yahooSymbol: '^IXIC', displayName: 'NASDAQ' },
+  'S&P 500': { yahooSymbol: '^GSPC', displayName: 'S&P 500' },
+  'DOW JONES': { yahooSymbol: '^DJI', displayName: 'DOW JONES' },
 };
 
 export function getStockMapping(symbol: string): StockMapping | null {
@@ -56,7 +58,6 @@ export function getIndexMapping(name: string): IndexMapping | null {
   return MARKET_INDICES[name] || null;
 }
 
-export function isRealStock(symbol: string): boolean {
-  const mapping = getStockMapping(symbol);
-  return mapping !== null && !mapping.isMock;
+export function getAllStockSymbols(): string[] {
+  return Object.keys(STOCK_MAPPINGS);
 }

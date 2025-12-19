@@ -46,7 +46,7 @@ app.listen(PORT, () => {
   logger.info(`🚀 Server running on port ${PORT}`);
   logger.info(`📊 Environment: ${env.NODE_ENV}`);
   logger.info(`🌐 Frontend URL: ${env.FRONTEND_URL}`);
-  logger.info(`📈 Groww API Base URL: ${env.GROWW_API_BASE_URL}`);
+  logger.info(`📈 Using Yahoo Finance API for real-time stock data`);
   logger.info(`✅ Server is ready to accept requests`);
 });
 

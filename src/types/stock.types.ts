@@ -26,3 +26,13 @@ export interface MarketIndex {
   change: number;
   changePercent: number;
 }
+
+export interface HistoricalData {
+  date: Date;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+  adjClose?: number;
+}

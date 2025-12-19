@@ -1,6 +1,6 @@
 import { useQuery, UseQueryResult } from '@tanstack/react-query';
 import { stocksApi } from '@/services/stocks.api';
-import type { Stock, MarketIndex, TopStock } from '@/types/stock.types';
+import type { Stock, MarketIndex, TopStock, HistoricalData } from '@/types/stock.types';
 
 /**
  * Hook to fetch watchlist stocks
@@ -73,5 +73,21 @@ export const useMarketIndices = (): UseQueryResult<MarketIndex[], Error> => {
     queryFn: () => stocksApi.getMarketIndices(),
     staleTime: 60000,
     refetchInterval: 60000,
+  });
+};
+
+/**
+ * Hook to fetch historical data for a stock
+ */
+export const useHistoricalData = (
+  symbol: string,
+  period: string = '1mo',
+  interval: string = '1d'
+): UseQueryResult<HistoricalData[], Error> => {
+  return useQuery({
+    queryKey: ['stocks', 'historical', symbol, period, interval],
+    queryFn: () => stocksApi.getHistoricalData(symbol, period, interval),
+    staleTime: 300000, // 5 minutes
+    enabled: !!symbol,
   });
 };

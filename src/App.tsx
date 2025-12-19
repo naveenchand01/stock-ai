@@ -9,6 +9,7 @@ import Landing from "./pages/Landing";
 import Login from "./pages/Login";
 import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
+import { StockDetails } from "./pages/StockDetails";
 import Avatar from "./pages/Avatar";
 import Forecast from "./pages/Forecast";
 import News from "./pages/News";
@@ -37,6 +38,14 @@ const App = () => (
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/stock/:symbol"
+              element={
+                <ProtectedRoute>
+                  <StockDetails />
                 </ProtectedRoute>
               }
             />

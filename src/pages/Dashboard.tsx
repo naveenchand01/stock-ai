@@ -85,9 +85,7 @@ const Dashboard = () => {
             </div>
             <div className="space-y-3">
               {watchlistStocks.map((stock) => (
-                <Link key={stock.symbol} to="/avatar" className="block">
-                  <StockCard {...stock} />
-                </Link>
+                <StockCard key={stock.symbol} {...stock} />
               ))}
             </div>
           </div>
