@@ -89,9 +89,8 @@ export const StockDetails = () => {
               <div className="text-3xl font-bold text-white">
                 ${stock.price.toFixed(2)}
               </div>
-              <div className={`flex items-center justify-end gap-1 ${
-                isPositive ? 'text-green-400' : 'text-red-400'
-              }`}>
+              <div className={`flex items-center justify-end gap-1 ${isPositive ? 'text-green-400' : 'text-red-400'
+                }`}>
                 {isPositive ? (
                   <TrendingUp className="h-4 w-4" />
                 ) : (
@@ -151,7 +150,7 @@ export const StockDetails = () => {
                     <CandlestickChart data={historicalData} height={500} />
                   ) : (
                     <div className="flex items-center justify-center h-[400px]">
-                      <div className="text-gray-400">No data available</div>
+                      <div className="text-gray-400">No data available. Market might be closed or data is missing.</div>
                     </div>
                   )}
                 </div>

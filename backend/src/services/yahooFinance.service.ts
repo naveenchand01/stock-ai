@@ -5,8 +5,20 @@ class YahooFinanceService {
   private yahooFinance: any;
 
   constructor() {
-    // Instantiate the Yahoo Finance client
-    this.yahooFinance = new YahooFinanceClass();
+    // Instantiate the Yahoo Finance client with configuration
+    // We use a custom fetch wrapper to set the User-Agent to avoid 429 errors
+    this.yahooFinance = new YahooFinanceClass({
+      queue: {
+        concurrency: 2 // Limit concurrent requests
+      },
+      fetch: async (url: any, init?: any) => {
+        const headers = {
+          ...init?.headers,
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        };
+        return fetch(url, { ...init, headers });
+      }
+    });
   }
 
   /**
@@ -56,28 +68,34 @@ class YahooFinanceService {
    * @param symbol Stock symbol
    * @param period1 Start date
    * @param period2 End date (optional, defaults to now)
-   * @param interval Data interval (1d, 1wk, 1mo, etc.)
+   * @param interval Data interval (1d, 1wk, 1mo, 5m, 15m, etc.)
    */
   async getHistoricalData(
     symbol: string,
     period1: Date | string,
     period2?: Date | string,
-    interval: '1d' | '1wk' | '1mo' = '1d'
+    interval: string = '1d'
   ) {
     try {
-      logger.debug(`Yahoo Finance API Request: GET historical data for ${symbol}`);
+      logger.debug(`Yahoo Finance API Request: GET historical data (chart) for ${symbol} with interval ${interval}`);
 
       const queryOptions = {
         period1,
         period2: period2 || new Date(),
-        interval,
+        interval: interval as any,
       };
 
-      const result = await this.yahooFinance.historical(symbol, queryOptions);
+      // We use chart API because it supports intraday intervals like '5m', '15m'
+      // and .historical() restricts to 1d, 1wk, 1mo and is being deprecated.
+      const result = await this.yahooFinance.chart(symbol, queryOptions);
 
       logger.debug(`Yahoo Finance API Response: Successfully fetched historical data for ${symbol}`);
-      return result;
+      return result.quotes || [];
     } catch (error: any) {
+      if (error.name === 'FailedYahooValidationError') {
+        logger.debug(`Yahoo Finance API Response: Validation Error bypassed for historical data ${symbol}`);
+        return error.result?.quotes || error.result || [];
+      }
       logger.error(`Failed to get historical data for ${symbol}:`, {
         message: error.message,
         symbol,
@@ -100,6 +118,10 @@ class YahooFinanceService {
       logger.debug(`Yahoo Finance API Response: Found ${resultCount} results`);
       return results;
     } catch (error: any) {
+      if (error.name === 'FailedYahooValidationError') {
+        logger.debug(`Yahoo Finance API Response with Validation Errors: Found results`);
+        return error.result;
+      }
       logger.error(`Failed to search stocks with query "${query}":`, {
         message: error.message,
         query,

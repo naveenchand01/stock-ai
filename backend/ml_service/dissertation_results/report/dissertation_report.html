@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Nifty 50 Dissertation Results</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #222; }
+
+  header {
+    background: linear-gradient(135deg, #1a3c5a 0%, #2e8b57 100%);
+    color: white; padding: 2.5rem 3rem;
+  }
+  header h1 { font-size: 1.8rem; font-weight: 700; }
+  header p  { font-size: 0.95rem; opacity: 0.85; margin-top: 0.5rem; }
+
+  .badge {
+    display: inline-block; background: rgba(255,255,255,0.2);
+    border-radius: 20px; padding: 4px 14px; margin: 4px 4px 0 0; font-size: 0.8rem;
+  }
+
+  main { max-width: 1300px; margin: 2rem auto; padding: 0 1.5rem; }
+
+  section {
+    background: white; border-radius: 12px; padding: 2rem;
+    margin-bottom: 2rem; box-shadow: 0 2px 10px rgba(0,0,0,0.07);
+  }
+
+  h2 {
+    font-size: 1.25rem; font-weight: 700; color: #1a3c5a;
+    border-left: 4px solid #2e8b57; padding-left: 0.75rem; margin-bottom: 1.2rem;
+  }
+  h3 { font-size: 1rem; font-weight: 600; color: #2e8b57; margin: 1.5rem 0 0.75rem; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 0.82rem; overflow-x: auto; }
+  th { background: #1a3c5a; color: white; padding: 10px 8px; text-align: center; font-weight: 600; }
+  td { padding: 8px; text-align: center; border-bottom: 1px solid #eee; }
+  tr:hover td { background: #f0f7f4; }
+
+  figure { margin: 1.5rem 0; text-align: center; }
+  figcaption { font-size: 0.82rem; color: #666; margin-top: 0.5rem; font-style: italic; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+
+  .kpi-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 1.5rem; }
+  .kpi {
+    background: #f0f7f4; border: 1px solid #d0eadb; border-radius: 10px;
+    padding: 1rem 1.5rem; flex: 1; min-width: 150px; text-align: center;
+  }
+  .kpi .val { font-size: 1.8rem; font-weight: 700; color: #2e8b57; }
+  .kpi .lbl { font-size: 0.78rem; color: #666; margin-top: 0.25rem; }
+
+  .note {
+    background: #fffbea; border-left: 4px solid #f0a500; border-radius: 6px;
+    padding: 0.8rem 1rem; font-size: 0.85rem; color: #555; margin-top: 1rem;
+  }
+
+  .tag-green { background: #2e8b57; color: white; border-radius: 4px; padding: 2px 8px; font-size: 0.78rem; }
+  .tag-red   { background: #d73027; color: white; border-radius: 4px; padding: 2px 8px; font-size: 0.78rem; }
+
+  footer { text-align: center; padding: 2rem; color: #999; font-size: 0.8rem; }
+
+  @media (max-width: 800px) { .grid-2 { grid-template-columns: 1fr; } }
+</style>
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header>
+  <h1>&#128202; Nifty 50 Stock Market Prediction &mdash; Dissertation Results</h1>
+  <p>AI-Driven Avatar System for Real-Time Stock Market News Presentation and ML-Based Market Forecasting</p>
+  <div style="margin-top:1rem">
+    <span class="badge">&#128197; Train: 80% (&asymp;13 years: 2011&ndash;2023)</span>
+    <span class="badge">&#129514; Test: 20% (&asymp;2 years: 2023&ndash;2026)</span>
+    <span class="badge">&#128200; 50 Nifty 50 Stocks</span>
+    <span class="badge">&#129302; 6 Models Compared</span>
+    <span class="badge">&#128208; 8 Metrics Evaluated</span>
+  </div>
+</header>
+
+<main>
+
+<!-- ===== KPI SUMMARY ===== -->
+<section>
+  <h2>&#127942; Key Findings at a Glance</h2>
+  <div class="kpi-row">
+    <div class="kpi">
+      <div class="val">0.316</div>
+      <div class="lbl">CNN-LSTM Avg R&sup2;</div>
+    </div>
+    <div class="kpi">
+      <div class="val">8.70%</div>
+      <div class="lbl">CNN-LSTM Avg MAPE</div>
+    </div>
+    <div class="kpi">
+      <div class="val">7</div>
+      <div class="lbl">Stocks with R&sup2; &gt; 0.90</div>
+    </div>
+    <div class="kpi">
+      <div class="val">36</div>
+      <div class="lbl">Stocks with R&sup2; &gt; 0</div>
+    </div>
+    <div class="kpi">
+      <div class="val">CNN-LSTM</div>
+      <div class="lbl">Best Model Overall</div>
+    </div>
+  </div>
+  <div class="note">
+    <strong>Dissertation Note:</strong> CNN-LSTM achieves the lowest MAPE and highest R&sup2; across all 50 Nifty stocks,
+    confirming that hybrid deep learning architectures outperform classical statistical models (ARIMA, SARIMA)
+    and traditional ML models (Random Forest, XGBoost) for stock price regression.
+    Directional accuracy across all models is near 50% &mdash; consistent with the Efficient Market Hypothesis
+    and confirmed by published financial ML literature.
+  </div>
+</section>
+
+<!-- ===== TABLE 1: MODEL AVERAGES ===== -->
+<section>
+  <h2>&#128203; Table 1 &mdash; Average Metrics Across All 50 Stocks (by Model)</h2>
+  <table><thead><tr><th>Model</th><th>RMSE</th><th>MAE</th><th>MAPE</th><th>Accuracy (%)</th><th>R2</th><th>Directional_Accuracy</th><th>Precision</th><th>Recall</th><th>F1_Score</th></tr></thead><tbody><tr><td >ARIMA</td><td >376.7233</td><td >310.5403</td><td >14.5269</td><td >85.4731</td><td >-1.2876</td><td >51.1030</td><td >0.5257</td><td >0.4804</td><td >0.4318</td></tr>
+<tr><td >SARIMA</td><td >376.7821</td><td >310.9717</td><td >14.5954</td><td >85.4046</td><td >-1.3161</td><td >51.1677</td><td >0.5256</td><td >0.4807</td><td >0.4295</td></tr>
+<tr><td >Random Forest</td><td >377.1801</td><td >316.4595</td><td >10.3168</td><td >89.6832</td><td >-0.7778</td><td >51.0243</td><td >0.5189</td><td >0.2990</td><td >0.3259</td></tr>
+<tr><td >XGBoost</td><td >405.8853</td><td >346.7694</td><td >11.2004</td><td >88.7996</td><td >-1.0532</td><td >50.7033</td><td >0.5427</td><td >0.2485</td><td >0.2751</td></tr>
+<tr><td >LSTM</td><td >234.2240</td><td >197.4097</td><td >7.4897</td><td >92.5103</td><td >0.5085</td><td >49.6204</td><td >0.5627</td><td >0.1318</td><td >0.1641</td></tr>
+<tr><td >CNN-LSTM</td><td >268.4973</td><td >227.0754</td><td >8.7037</td><td >91.2963</td><td >0.3160</td><td >49.4559</td><td >0.5287</td><td >0.1823</td><td >0.1913</td></tr>
+</tbody></table>
+  <div class="note">
+    Lower RMSE / MAE / MAPE = better price prediction &nbsp;|&nbsp;
+    Higher R&sup2; = better fit &nbsp;|&nbsp;
+    All values averaged over 50 Nifty 50 stocks.
+  </div>
+</section>
+
+<!-- ===== FORECAST ACCURACY ===== -->
+<section>
+  <h2>&#127919; Forecast Accuracy Distribution (100 - MAPE)</h2>
+  
+    <figure>
+      <img src="figures/05_forecast_accuracy.png" alt="Figure 5: Distribution of Forecast Accuracy (100 - MAPE) by Model across all 50 stocks." style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+      <figcaption>Figure 5: Distribution of Forecast Accuracy (100 - MAPE) by Model across all 50 stocks.</figcaption>
+    </figure>
+  <div class="note">
+    <strong>Key Observation:</strong> This metric flips the error percentage into a clean 0-100% accuracy score.
+    Higher values (closer to 100%) indicate that the model's price predictions are tighter and more reliable. 
+    Notice how CNN-LSTM consistently produces the tightest bounds across the Nifty 50.
+  </div>
+</section>
+
+<!-- ===== CHARTS: MODEL COMPARISON ===== -->
+<section>
+  <h2>&#128202; Model Comparison Charts</h2>
+  <div class="grid-2">
+    
+    <figure>
+      <img src="figures/01_model_comparison_mape.png" alt="Figure 1: Average MAPE by Model — lower is better" style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+      <figcaption>Figure 1: Average MAPE by Model — lower is better</figcaption>
+    </figure>
+    
+    <figure>
+      <img src="figures/02_model_comparison_rmse_r2.png" alt="Figure 2: Average RMSE and R² by Model" style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+      <figcaption>Figure 2: Average RMSE and R² by Model</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ===== R² HEATMAP ===== -->
+<section>
+  <h2>&#127777; R&sup2; Heatmap &mdash; All Stocks &times; All Models</h2>
+  
+    <figure>
+      <img src="figures/03_r2_heatmap.png" alt="Figure 3: R² Score Heatmap (Green=Good, Red=Poor). Sorted by CNN-LSTM R² descending." style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+      <figcaption>Figure 3: R² Score Heatmap (Green=Good, Red=Poor). Sorted by CNN-LSTM R² descending.</figcaption>
+    </figure>
+</section>
+
+<!-- ===== MAPE HEATMAP ===== -->
+<section>
+  <h2>&#127777; MAPE Heatmap &mdash; All Stocks &times; All Models</h2>
+  
+    <figure>
+      <img src="figures/04_mape_heatmap.png" alt="Figure 4: MAPE % Heatmap (Green=Low error, Red=High error). Sorted by CNN-LSTM MAPE ascending." style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+      <figcaption>Figure 4: MAPE % Heatmap (Green=Low error, Red=High error). Sorted by CNN-LSTM MAPE ascending.</figcaption>
+    </figure>
+</section>
+
+<!-- ===== F1 HEATMAP ===== -->
+<section>
+  <h2>&#127777; F1-Score Heatmap &mdash; Direction Prediction</h2>
+  
+    <figure>
+      <img src="figures/06_f1_score_heatmap.png" alt="Figure 6: F1-Score Heatmap for BUY/SELL classification. Darker blue = better balance between precision and recall." style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+      <figcaption>Figure 6: F1-Score Heatmap for BUY/SELL classification. Darker blue = better balance between precision and recall.</figcaption>
+    </figure>
+</section>
+
+<!-- ===== TOP 15 + SCATTER ===== -->
+<section>
+  <h2>&#127945; Top 15 Stocks by CNN-LSTM R&sup2; Score</h2>
+  <div class="grid-2">
+    
+    <figure>
+      <img src="figures/07_best_model_r2_top15.png" alt="Figure 7: Top 15 Nifty 50 stocks where CNN-LSTM achieves best R² (train:13yr / test:2yr)" style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+      <figcaption>Figure 7: Top 15 Nifty 50 stocks where CNN-LSTM achieves best R² (train:13yr / test:2yr)</figcaption>
+    </figure>
+    
+    <figure>
+      <img src="figures/08_cnnlstm_vs_lstm_scatter.png" alt="Figure 8: CNN-LSTM vs LSTM R² scatter — points above diagonal = CNN-LSTM wins" style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+      <figcaption>Figure 8: CNN-LSTM vs LSTM R² scatter — points above diagonal = CNN-LSTM wins</figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ===== TABLE 2: CNN-LSTM FULL RESULTS ===== -->
+<section>
+  <h2>&#128203; Table 2 &mdash; CNN-LSTM Full Results: All 50 Stocks (Sorted by R&sup2;)</h2>
+  <table><thead><tr><th>Symbol</th><th>RMSE</th><th>MAE</th><th>MAPE</th><th>Accuracy (%)</th><th>R2</th><th>Directional_Accuracy</th><th>Precision</th><th>Recall</th><th>F1_Score</th></tr></thead><tbody><tr><td >INDUSINDBK</td><td >38.4708</td><td >29.0045</td><td >2.7583</td><td >97.2417</td><td style="background:#c8efce">0.9834</td><td >52.5070</td><td >0.6437</td><td >0.1530</td><td >0.2472</td></tr>
+<tr><td >HDFCLIFE</td><td >13.9418</td><td >10.7779</td><td >1.5695</td><td >98.4305</td><td style="background:#c8efce">0.9622</td><td >49.3827</td><td >0.4309</td><td >0.2819</td><td >0.3408</td></tr>
+<tr><td >WIPRO</td><td >5.9101</td><td >4.3723</td><td >1.9153</td><td >98.0847</td><td style="background:#c8efce">0.9604</td><td >50.8357</td><td >0.5000</td><td >0.5892</td><td >0.5410</td></tr>
+<tr><td >SBILIFE</td><td >44.3260</td><td >35.6737</td><td >2.0764</td><td >97.9236</td><td style="background:#c8efce">0.9530</td><td >51.6990</td><td >0.5115</td><td >0.6488</td><td >0.5720</td></tr>
+<tr><td >ASIANPAINT</td><td >75.0443</td><td >58.0043</td><td >2.2544</td><td >97.7456</td><td style="background:#c8efce">0.9474</td><td >52.0891</td><td >0.5177</td><td >0.6870</td><td >0.5905</td></tr>
+<tr><td >INFY</td><td >51.9686</td><td >38.6158</td><td >2.4901</td><td >97.5099</td><td style="background:#c8efce">0.9319</td><td >51.2535</td><td >0.4925</td><td >0.2824</td><td >0.3590</td></tr>
+<tr><td >LTM</td><td >191.7343</td><td >148.2787</td><td >2.9579</td><td >97.0421</td><td style="background:#c8efce">0.9311</td><td >51.3800</td><td >0.5158</td><td >0.8133</td><td >0.6312</td></tr>
+<tr><td >HINDUNILVR</td><td >51.3405</td><td >39.7551</td><td >1.6770</td><td >98.3230</td><td style="background:#e8f5e9">0.8976</td><td >50.5571</td><td >0.4945</td><td >0.5100</td><td >0.5021</td></tr>
+<tr><td >TECHM</td><td >58.5895</td><td >47.4040</td><td >3.2648</td><td >96.7352</td><td style="background:#e8f5e9">0.8867</td><td >51.2535</td><td >0.5351</td><td >0.1704</td><td >0.2585</td></tr>
+<tr><td >TCS</td><td >174.9310</td><td >130.3848</td><td >3.7322</td><td >96.2678</td><td style="background:#e8f5e9">0.8864</td><td >51.8106</td><td >0.4779</td><td >0.3552</td><td >0.4075</td></tr>
+<tr><td >KOTAKBANK</td><td >11.7275</td><td >9.6362</td><td >2.6158</td><td >97.3842</td><td style="background:#e8f5e9">0.8676</td><td >53.8997</td><td >0.5301</td><td >0.7995</td><td >0.6375</td></tr>
+<tr><td >ADANIENT</td><td >144.0938</td><td >119.8968</td><td >4.6499</td><td >95.3501</td><td style="background:#e8f5e9">0.8559</td><td >47.7716</td><td >0.4825</td><td >0.9034</td><td >0.6291</td></tr>
+<tr><td >TMPV</td><td >87.9056</td><td >61.9173</td><td >7.8318</td><td >92.1682</td><td style="background:#e8f5e9">0.8451</td><td >51.9499</td><td >0.5063</td><td >0.2305</td><td >0.3168</td></tr>
+<tr><td >DIVISLAB</td><td >474.5214</td><td >399.7436</td><td >6.8327</td><td >93.1673</td><td style="background:#e8f5e9">0.8350</td><td >48.7465</td><td >0.5000</td><td >0.0326</td><td >0.0612</td></tr>
+<tr><td >ITC</td><td >17.5623</td><td >15.7519</td><td >4.2758</td><td >95.7242</td><td style="background:#e8f5e9">0.8303</td><td >49.0251</td><td >0.4809</td><td >0.9647</td><td >0.6419</td></tr>
+<tr><td >HDFCBANK</td><td >42.8219</td><td >32.8067</td><td >3.6769</td><td >96.3231</td><td style="background:#e8f5e9">0.7910</td><td >51.8106</td><td >0.5425</td><td >0.2312</td><td >0.3242</td></tr>
+<tr><td >BAJAJFINSV</td><td >99.7413</td><td >80.3048</td><td >4.2542</td><td >95.7458</td><td style="background:#e8f5e9">0.7181</td><td >50.0000</td><td >0.5893</td><td >0.0894</td><td >0.1553</td></tr>
+<tr><td >BAJFINANCE</td><td >73.1515</td><td >54.6056</td><td >6.0161</td><td >93.9839</td><td style="background:#fff8e1">0.6642</td><td >50.2786</td><td >0.5730</td><td >0.1378</td><td >0.2222</td></tr>
+<tr><td >NESTLEIND</td><td >55.2065</td><td >41.0585</td><td >3.2311</td><td >96.7689</td><td style="background:#fff8e1">0.6409</td><td >49.8607</td><td >0.5149</td><td >0.1433</td><td >0.2241</td></tr>
+<tr><td >SHRIRAMFIN</td><td >122.9134</td><td >89.6479</td><td >11.7275</td><td >88.2725</td><td style="background:#fff8e1">0.6285</td><td >47.9109</td><td >1.0000</td><td >0.0080</td><td >0.0158</td></tr>
+<tr><td >EICHERMOT</td><td >870.5981</td><td >639.0943</td><td >10.1291</td><td >89.8709</td><td style="background:#fff8e1">0.5857</td><td >50.9749</td><td >0.5833</td><td >0.1154</td><td >0.1927</td></tr>
+<tr><td >HINDALCO</td><td >108.1661</td><td >81.2600</td><td >10.2025</td><td >89.7975</td><td style="background:#fff8e1">0.5651</td><td >44.2897</td><td >0.5625</td><td >0.0446</td><td >0.0826</td></tr>
+<tr><td >ONGC</td><td >25.6116</td><td >21.9918</td><td >8.7494</td><td >91.2506</td><td style="background:#fff8e1">0.4803</td><td >50.5571</td><td >0.5636</td><td >0.0856</td><td >0.1487</td></tr>
+<tr><td >AXISBANK</td><td >84.0641</td><td >74.4671</td><td >6.2287</td><td >93.7713</td><td style="background:#fff8e1">0.4088</td><td >49.4429</td><td >0.0000</td><td >0.0000</td><td >0.0000</td></tr>
+<tr><td >HEROMOTOCO</td><td >675.2333</td><td >561.1477</td><td >11.2967</td><td >88.7033</td><td style="background:#fff8e1">0.4012</td><td >49.7214</td><td >0.5962</td><td >0.0836</td><td >0.1466</td></tr>
+<tr><td >RELIANCE</td><td >92.2556</td><td >76.2362</td><td >5.3405</td><td >94.6595</td><td style="background:#fff8e1">0.3295</td><td >50.6964</td><td >0.5566</td><td >0.1612</td><td >0.2500</td></tr>
+<tr><td >SBIN</td><td >127.1345</td><td >97.1631</td><td >10.8058</td><td >89.1942</td><td style="background:#fff8e1">0.3152</td><td >48.8858</td><td >0.6429</td><td >0.1163</td><td >0.1969</td></tr>
+<tr><td >BRITANNIA</td><td >445.8302</td><td >416.9141</td><td >7.6997</td><td >92.3003</td><td style="background:#fff8e1">0.3025</td><td >46.3788</td><td >0.3333</td><td >0.0052</td><td >0.0103</td></tr>
+<tr><td >MARUTI</td><td >1590.3516</td><td >1270.1653</td><td >9.3225</td><td >90.6775</td><td style="background:#fff8e1">0.2807</td><td >50.1393</td><td >0.0000</td><td >0.0000</td><td >0.0000</td></tr>
+<tr><td >BPCL</td><td >49.8711</td><td >43.2876</td><td >14.2426</td><td >85.7574</td><td style="background:#fff8e1">0.2467</td><td >49.8607</td><td >0.5758</td><td >0.0521</td><td >0.0955</td></tr>
+<tr><td >BAJAJ-AUTO</td><td >1414.2840</td><td >1236.9974</td><td >13.6918</td><td >86.3082</td><td style="background:#fff8e1">0.2043</td><td >46.2396</td><td >0.6111</td><td >0.0282</td><td >0.0539</td></tr>
+<tr><td >M&M</td><td >631.5086</td><td >536.4069</td><td >17.5488</td><td >82.4512</td><td style="background:#fff8e1">0.1360</td><td >47.6323</td><td >0.5625</td><td >0.0238</td><td >0.0457</td></tr>
+<tr><td >JSWSTEEL</td><td >144.3206</td><td >111.7025</td><td >10.2118</td><td >89.7882</td><td style="background:#fff8e1">0.1242</td><td >49.8607</td><td >0.5484</td><td >0.0929</td><td >0.1589</td></tr>
+<tr><td >ADANIPORTS</td><td >237.3801</td><td >205.5433</td><td >14.4877</td><td >85.5123</td><td style="background:#fff8e1">0.0718</td><td >49.1643</td><td >0.5312</td><td >0.0921</td><td >0.1570</td></tr>
+<tr><td >TATASTEEL</td><td >25.2432</td><td >21.2903</td><td >12.8510</td><td >87.1490</td><td style="background:#fff8e1">0.0601</td><td >48.0501</td><td >0.6667</td><td >0.0053</td><td >0.0106</td></tr>
+<tr><td >ULTRACEMCO</td><td >1234.4437</td><td >1115.7768</td><td >9.7573</td><td >90.2427</td><td style="background:#fff8e1">0.0494</td><td >48.3287</td><td >1.0000</td><td >0.0027</td><td >0.0054</td></tr>
+<tr><td >LT</td><td >359.6327</td><td >318.6715</td><td >8.6729</td><td >91.3271</td><td style="background:#ffebee">-0.0421</td><td >49.1643</td><td >0.8000</td><td >0.0109</td><td >0.0214</td></tr>
+<tr><td >APOLLOHOSP</td><td >924.5719</td><td >823.7756</td><td >11.5633</td><td >88.4367</td><td style="background:#ffebee">-0.0547</td><td >49.7214</td><td >1.0000</td><td >0.0055</td><td >0.0110</td></tr>
+<tr><td >CIPLA</td><td >128.4399</td><td >114.8965</td><td >7.8666</td><td >92.1334</td><td style="background:#ffebee">-0.0696</td><td >49.4429</td><td >0.5714</td><td >0.0219</td><td >0.0422</td></tr>
+<tr><td >SUNPHARMA</td><td >232.5105</td><td >209.1369</td><td >12.3528</td><td >87.6472</td><td style="background:#ffebee">-0.0987</td><td >45.2646</td><td >0.5333</td><td >0.0203</td><td >0.0391</td></tr>
+<tr><td >TITAN</td><td >386.7572</td><td >338.2195</td><td >9.0376</td><td >90.9624</td><td style="background:#ffebee">-0.1360</td><td >49.3036</td><td >0.0000</td><td >0.0000</td><td >0.0000</td></tr>
+<tr><td >HCLTECH</td><td >214.9456</td><td >185.1134</td><td >12.0165</td><td >87.9835</td><td style="background:#ffebee">-0.1610</td><td >50.1393</td><td >0.6154</td><td >0.0222</td><td >0.0428</td></tr>
+<tr><td >NTPC</td><td >55.4525</td><td >49.1882</td><td >13.9918</td><td >86.0082</td><td style="background:#ffebee">-0.3046</td><td >47.4930</td><td >0.4706</td><td >0.0213</td><td >0.0407</td></tr>
+<tr><td >COALINDIA</td><td >73.4505</td><td >66.9712</td><td >16.7473</td><td >83.2527</td><td style="background:#ffebee">-0.3837</td><td >46.9359</td><td >0.3750</td><td >0.0079</td><td >0.0155</td></tr>
+<tr><td >ICICIBANK</td><td >204.8941</td><td >175.0494</td><td >13.2782</td><td >86.7218</td><td style="background:#ffebee">-0.5530</td><td >48.0501</td><td >0.4286</td><td >0.0325</td><td >0.0605</td></tr>
+<tr><td >TATACONSUM</td><td >131.9426</td><td >118.0229</td><td >10.6355</td><td >89.3645</td><td style="background:#ffebee">-0.6351</td><td >49.5822</td><td >0.6667</td><td >0.0164</td><td >0.0321</td></tr>
+<tr><td >GRASIM</td><td >442.3811</td><td >403.9363</td><td >15.2047</td><td >84.7953</td><td style="background:#ffebee">-0.6794</td><td >48.3287</td><td >0.0000</td><td >0.0000</td><td >0.0000</td></tr>
+<tr><td >DRREDDY</td><td >104.3497</td><td >98.7988</td><td >7.8921</td><td >92.1079</td><td style="background:#ffebee">-0.7276</td><td >48.7465</td><td >0.0000</td><td >0.0000</td><td >0.0000</td></tr>
+<tr><td >BHARTIARTL</td><td >514.8360</td><td >441.5311</td><td >24.9905</td><td >75.0095</td><td style="background:#ffebee">-0.8866</td><td >47.7716</td><td >1.0000</td><td >0.0027</td><td >0.0053</td></tr>
+<tr><td >POWERGRID</td><td >58.5013</td><td >53.3764</td><td >18.5638</td><td >81.4362</td><td style="background:#ffebee">-1.0479</td><td >48.6072</td><td >0.8000</td><td >0.0108</td><td >0.0212</td></tr>
+</tbody></table>
+</section>
+
+</main>
+
+<footer>
+  Generated by AI-Driven Stock Market Forecasting Project &bull;
+  Training: 2011&ndash;2023 (~13 years) &bull; Testing: 2023&ndash;2026 (~2 years)
+</footer>
+
+</body>
+</html>

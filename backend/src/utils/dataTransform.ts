@@ -19,6 +19,8 @@ export interface Stock {
   price: number;
   change: number;
   changePercent: number;
+  volume: number;
+  previousClose?: number;
 }
 
 export interface MarketIndex {
@@ -26,6 +28,7 @@ export interface MarketIndex {
   value: number;
   change: number;
   changePercent: number;
+  symbol?: string;
 }
 
 /**
@@ -39,6 +42,7 @@ export function transformYahooQuoteToStock(yahooData: any, displaySymbol: string
   const price = data.regularMarketPrice || 0;
   const change = data.regularMarketChange || 0;
   const changePercent = data.regularMarketChangePercent || 0;
+  const volume = data.regularMarketVolume || 0;
 
   return {
     symbol,
@@ -46,13 +50,15 @@ export function transformYahooQuoteToStock(yahooData: any, displaySymbol: string
     price: parseFloat(price.toFixed(2)),
     change: parseFloat(change.toFixed(2)),
     changePercent: parseFloat(changePercent.toFixed(2)),
+    volume,
+    previousClose: data.regularMarketPreviousClose ? parseFloat(data.regularMarketPreviousClose.toFixed(2)) : parseFloat((price - change).toFixed(2)),
   };
 }
 
 /**
  * Transform Yahoo Finance index quote to MarketIndex format
  */
-export function transformYahooIndexToMarketIndex(yahooData: any, displayName: string): MarketIndex {
+export function transformYahooIndexToMarketIndex(yahooData: any, displayName: string, symbol?: string): MarketIndex {
   const data: YahooQuoteData = yahooData;
 
   const value = data.regularMarketPrice || 0;
@@ -64,6 +70,7 @@ export function transformYahooIndexToMarketIndex(yahooData: any, displayName: st
     value: parseFloat(value.toFixed(2)),
     change: parseFloat(change.toFixed(2)),
     changePercent: parseFloat(changePercent.toFixed(2)),
+    symbol: symbol,
   };
 }
 

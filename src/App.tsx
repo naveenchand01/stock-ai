@@ -11,10 +11,12 @@ import Signup from "./pages/Signup";
 import Dashboard from "./pages/Dashboard";
 import { StockDetails } from "./pages/StockDetails";
 import Avatar from "./pages/Avatar";
-import Forecast from "./pages/Forecast";
+import Alerts from "./pages/Alerts";
+import Admin from "./pages/Admin";
+import Stock from "./pages/Stock";
 import News from "./pages/News";
 import Watchlist from "./pages/Watchlist";
-import Personalization from "./pages/Personalization";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -58,10 +60,10 @@ const App = () => (
               }
             />
             <Route
-              path="/forecast"
+              path="/stock"
               element={
                 <ProtectedRoute>
-                  <Forecast />
+                  <Stock />
                 </ProtectedRoute>
               }
             />
@@ -82,10 +84,26 @@ const App = () => (
               }
             />
             <Route
-              path="/personalization"
+              path="/alerts"
               element={
                 <ProtectedRoute>
-                  <Personalization />
+                  <Alerts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <Admin />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <Settings />
                 </ProtectedRoute>
               }
             />

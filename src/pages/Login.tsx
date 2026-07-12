@@ -225,6 +225,11 @@ const Login = () => {
                   Sign up
                 </Link>
               </div>
+              <div className="text-xs text-muted-foreground/50 text-center pt-4">
+                <Link to="/admin" className="hover:text-primary transition-colors">
+                  Admin Access
+                </Link>
+              </div>
             </CardFooter>
           </Card>
         </motion.div>

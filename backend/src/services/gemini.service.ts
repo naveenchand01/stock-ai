@@ -6,40 +6,141 @@ class GeminiService {
   private genAI: GoogleGenerativeAI;
   private model: any;
   private modelAvailable: boolean = true;
+  private cache = new Map<string, { text: string; expiry: number }>();
 
   constructor() {
     this.genAI = new GoogleGenerativeAI(env.GEMINI_API_KEY);
-    // Try gemini-1.5-flash first (most common), fallback to others
-    this.model = this.genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // User's key specifically supports 2.0-flash and flash-latest
+    this.model = this.genAI.getGenerativeModel({ model: 'gemini-flash-latest' });
+  }
+
+  async generate(prompt: string, preferredModel?: string): Promise<string> {
+    const cacheKey = prompt.trim().toLowerCase().substring(0, 500);
+    const cached = this.cache.get(cacheKey);
+    if (cached && cached.expiry > Date.now()) {
+      console.log(`[GEMINI] Returning cached response for: ${cacheKey.substring(0, 50)}...`);
+      return cached.text;
+    }
+
+    const models = [
+      preferredModel,
+      'gemini-2.0-flash',
+      'gemini-flash-latest',
+      'gemini-2.5-flash',
+      'gemini-2.0-flash-lite',
+      'gemini-flash-lite-latest',
+      'gemini-pro-latest'
+    ].filter(Boolean) as string[];
+
+    const uniqueModels = [...new Set(models)];
+    let lastError = '';
+
+    for (const modelName of uniqueModels) {
+      console.log(`[GEMINI] Trying model: ${modelName}`);
+      for (let attempt = 0; attempt < 3; attempt++) {
+        try {
+          const model = this.genAI.getGenerativeModel({ model: modelName });
+          const result = await model.generateContent(prompt);
+          const response = await result.response;
+          const text = response.text();
+          if (text) {
+            this.cache.set(cacheKey, { text, expiry: Date.now() + 300000 });
+            this.model = model;
+            this.modelAvailable = true;
+            return text;
+          }
+        } catch (err: any) {
+          lastError = err.message || 'Unknown error';
+          console.log(`[GEMINI] Model ${modelName} Attempt ${attempt + 1} Error: ${lastError.substring(0, 100)}`);
+
+          const isRateLimit = lastError.includes('Too Many Requests') || lastError.includes('429') || lastError.includes('quota');
+          const isNotFound = lastError.includes('not found') || lastError.includes('404');
+
+          if (isNotFound) {
+            console.log(`[GEMINI] Model ${modelName} is NOT supported for this key. Skipping...`);
+            break; // Try next model immediately
+          }
+
+          if (isRateLimit && attempt < 2) {
+            const retryMatch = lastError.match(/retry in (\d+\.?\d*)/i);
+            const waitSec = retryMatch ? Math.min(parseFloat(retryMatch[1]) + 1, 30) : 10 * (attempt + 1);
+            logger.warn(`[GEMINI] Rate limited on ${modelName}, retrying in ${waitSec}s (Attempt ${attempt + 1})...`);
+            await new Promise(r => setTimeout(r, waitSec * 1000));
+          } else {
+            logger.error(`[GEMINI] Model ${modelName} failed or max retries hit.`);
+            break; // try next model
+          }
+        }
+      }
+    }
+    this.modelAvailable = false;
+    throw new Error(`All Gemini models failed. Last error: ${lastError}`);
   }
 
   /**
-   * Generate content with automatic model fallback
+   * Deprecated. Use generate() instead.
    */
   private async generateWithFallback(prompt: string): Promise<string> {
-    const models = ['gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
+    return this.generate(prompt);
+  }
 
-    for (const modelName of models) {
+  /**
+   * Analyze sentiment for an array of headlines
+   * Returns array of sentiment scores from -1.0 to 1.0
+   */
+  async analyzeSentiment(headlines: string[]): Promise<number[]> {
+    // Sanitize headlines - strip HTML entities and special characters
+    const cleanHeadlines = headlines.map(h =>
+      h.replace(/&amp;/g, '&')
+        .replace(/&lt;/g, '<')
+        .replace(/&gt;/g, '>')
+        .replace(/&quot;/g, '"')
+        .replace(/&#39;/g, "'")
+        .replace(/<[^>]*>/g, '')
+        .trim()
+    );
+
+    const prompt = `Rate the financial market sentiment of each headline below.
+Score each from -1.0 (very bearish/negative) to 1.0 (very bullish/positive).
+Reply with ONLY a JSON array. No markdown. No explanation. Example: [{"sentiment": 0.5}, {"sentiment": -0.3}]
+Exactly ${cleanHeadlines.length} objects needed.
+
+${cleanHeadlines.map((h, i) => `${i + 1}. ${h}`).join('\n')}`;
+
+    // Try multiple models available for this account
+    const modelsToTry = ['gemini-flash-latest', 'gemini-2.0-flash'];
+
+    for (const modelName of modelsToTry) {
       try {
+        console.log(`[SENTIMENT] Trying model: ${modelName}`);
         const model = this.genAI.getGenerativeModel({ model: modelName });
         const result = await model.generateContent(prompt);
-        const response = await result.response;
-        const text = response.text();
+        let rawText = result.response.text();
 
-        // If successful, update the default model
-        this.model = model;
-        this.modelAvailable = true;
-        logger.info(`Successfully using Gemini model: ${modelName}`);
-        return text;
+        // Strip markdown code fences
+        rawText = rawText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
+
+        console.log('[SENTIMENT] Raw response:', rawText.substring(0, 200));
+
+        let sentiments: any[] = [];
+        try {
+          sentiments = JSON.parse(rawText);
+        } catch {
+          const match = rawText.match(/\[[\s\S]*\]/);
+          if (match) sentiments = JSON.parse(match[0]);
+        }
+
+        console.log('[SENTIMENT] Parsed', sentiments.length, 'values, first 3:', sentiments.slice(0, 3));
+
+        return sentiments.map((s: any) => (typeof s?.sentiment === 'number' ? s.sentiment : 0));
       } catch (error: any) {
-        logger.warn(`Model ${modelName} not available:`, error.message);
+        console.error(`[SENTIMENT] Model ${modelName} failed:`, error.message);
         continue;
       }
     }
 
-    // If all models fail, mark as unavailable and return fallback
-    this.modelAvailable = false;
-    throw new Error('Gemini AI is currently unavailable. Please check your API key configuration.');
+    console.error('[SENTIMENT] All models failed');
+    return headlines.map(() => 0);
   }
 
   /**

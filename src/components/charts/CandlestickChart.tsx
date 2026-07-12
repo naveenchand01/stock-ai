@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { createChart, ColorType, CrosshairMode } from 'lightweight-charts';
+import { createChart, ColorType, CrosshairMode, CandlestickSeries, HistogramSeries } from 'lightweight-charts';
 import type { HistoricalData } from '@/types/stock.types';
 
 interface CandlestickChartProps {
@@ -51,7 +51,7 @@ export const CandlestickChart = ({ data, height = 400 }: CandlestickChartProps) 
     chartRef.current = chart;
 
     // Add candlestick series
-    const candlestickSeries = chart.addCandlestickSeries({
+    const candlestickSeries = chart.addSeries(CandlestickSeries, {
       upColor: '#10B981',
       downColor: '#EF4444',
       borderVisible: false,
@@ -60,18 +60,27 @@ export const CandlestickChart = ({ data, height = 400 }: CandlestickChartProps) 
     });
 
     // Transform data for lightweight-charts
-    const chartData = data.map((item) => ({
-      time: Math.floor(new Date(item.date).getTime() / 1000),
-      open: item.open,
-      high: item.high,
-      low: item.low,
-      close: item.close,
-    }));
+    const seenTimes = new Set();
+    const chartData = [];
+
+    for (const item of data) {
+      const time = Math.floor(new Date(item.date).getTime() / 1000);
+      if (!seenTimes.has(time)) {
+        seenTimes.add(time);
+        chartData.push({
+          time,
+          open: item.open,
+          high: item.high,
+          low: item.low,
+          close: item.close,
+        });
+      }
+    }
 
     candlestickSeries.setData(chartData);
 
     // Add volume series
-    const volumeSeries = chart.addHistogramSeries({
+    const volumeSeries = chart.addSeries(HistogramSeries, {
       color: '#26a69a',
       priceFormat: {
         type: 'volume',
@@ -79,11 +88,20 @@ export const CandlestickChart = ({ data, height = 400 }: CandlestickChartProps) 
       priceScaleId: '', // Set as an overlay by setting a blank priceScaleId
     });
 
-    const volumeData = data.map((item) => ({
-      time: Math.floor(new Date(item.date).getTime() / 1000),
-      value: item.volume,
-      color: item.close >= item.open ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)',
-    }));
+    const volumeData = [];
+    const seenVolumeTimes = new Set();
+
+    for (const item of data) {
+      const time = Math.floor(new Date(item.date).getTime() / 1000);
+      if (!seenVolumeTimes.has(time)) {
+        seenVolumeTimes.add(time);
+        volumeData.push({
+          time: time as any, // type assertion to bypass Time mismatch
+          value: item.volume,
+          color: item.close >= item.open ? 'rgba(16, 185, 129, 0.4)' : 'rgba(239, 68, 68, 0.4)'
+        });
+      }
+    }
 
     volumeSeries.setData(volumeData);
 

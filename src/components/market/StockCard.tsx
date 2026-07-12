@@ -14,7 +14,7 @@ export function StockCard({ symbol, name, price, change, changePercent }: StockC
   const isPositive = change >= 0;
 
   return (
-    <Link to={`/stock/${symbol}`}>
+    <Link to={`/stock?symbol=${symbol}&mode=comparison`}>
       <motion.div
         whileHover={{ scale: 1.02 }}
         className="glass-card p-4 cursor-pointer transition-all hover:border-primary/30"

@@ -1,6 +1,6 @@
 import { yahooFinanceApi } from './yahooFinance.service';
 import { cacheService } from './cache.service';
-import { getStockMapping, getIndexMapping, STOCK_MAPPINGS, MARKET_INDICES } from '../config/symbols';
+import { getStockMapping, getIndexMapping, getAllStockSymbols, STOCK_MAPPINGS, MARKET_INDICES } from '../config/symbols';
 import {
   transformYahooQuoteToStock,
   transformYahooIndexToMarketIndex,
@@ -23,19 +23,38 @@ class StocksService {
     }
 
     const mapping = getStockMapping(symbol);
-    if (!mapping) {
-      throw new Error(`Unknown stock symbol: ${symbol}`);
-    }
+    // If not in our manual mapping, just try the raw symbol (fallback for search results)
+    const yahooSymbol = mapping ? mapping.yahooSymbol : symbol;
+    const displayName = mapping ? mapping.displaySymbol : symbol;
+    const name = mapping ? mapping.name : undefined;
 
     // Fetch real data from Yahoo Finance API
     try {
-      const data = await yahooFinanceApi.getQuote(mapping.yahooSymbol);
+      const data = await yahooFinanceApi.getQuote(yahooSymbol);
 
-      const stock = transformYahooQuoteToStock(data, mapping.displaySymbol, mapping.name);
+      const stock = transformYahooQuoteToStock(data, displayName, name);
       cacheService.set(cacheKey, stock, 60); // Cache for 60 seconds
       return stock;
     } catch (error) {
       logger.error(`Failed to fetch quote for ${symbol}:`, error);
+      throw error;
+    }
+  }
+
+  async search(query: string) {
+    try {
+      const results = await yahooFinanceApi.searchStocks(query);
+      if (results && results.quotes) {
+        // Filter results to only include allowed NIFTY 50 stocks
+        results.quotes = results.quotes.filter((q: any) => {
+           if (!q.symbol) return false;
+           const rawSymbol = q.symbol.replace('.NS', '');
+           return !!getStockMapping(rawSymbol) || !!getStockMapping(q.symbol);
+        });
+      }
+      return results;
+    } catch (error) {
+      logger.error(`Failed to search stocks for ${query}:`, error);
       throw error;
     }
   }
@@ -49,35 +68,54 @@ class StocksService {
       const yahooSymbols = symbols
         .map((symbol) => {
           const mapping = getStockMapping(symbol);
-          return mapping ? { original: symbol, yahoo: mapping.yahooSymbol, mapping } : null;
-        })
-        .filter((item): item is NonNullable<typeof item> => item !== null);
+          return {
+            original: symbol,
+            yahoo: mapping ? mapping.yahooSymbol : symbol,
+            displayName: mapping ? mapping.displaySymbol : symbol,
+            name: mapping ? mapping.name : undefined
+          };
+        });
 
       if (yahooSymbols.length === 0) {
         return [];
       }
 
-      // Fetch all quotes in batch from Yahoo Finance
-      const yahooQuotesResult = await yahooFinanceApi.getQuotes(yahooSymbols.map((s) => s.yahoo));
-
-      // yahooFinance.quote() returns an array when passed an array of symbols
-      const yahooQuotes = Array.isArray(yahooQuotesResult) ? yahooQuotesResult : [yahooQuotesResult];
+      // Fetch all quotes in batch from Yahoo Finance, with fallback to individual queries if batch fails
+      let yahooQuotes: any[] = [];
+      try {
+        const yahooQuotesResult = await yahooFinanceApi.getQuotes(yahooSymbols.map((s) => s.yahoo));
+        yahooQuotes = Array.isArray(yahooQuotesResult) ? yahooQuotesResult : [yahooQuotesResult];
+      } catch (batchError) {
+        logger.warn(`Batch fetch failed, falling back to individual fetches: ${batchError}`);
+        for (const symbolData of yahooSymbols) {
+          try {
+            const quote = await yahooFinanceApi.getQuote(symbolData.yahoo);
+            if (quote) {
+              yahooQuotes.push(quote);
+            }
+          } catch (individualError) {
+            logger.error(`Failed to fetch individual quote for ${symbolData.original}:`, individualError);
+          }
+        }
+      }
 
       // Transform the results
       const stocks: Stock[] = [];
       for (let i = 0; i < yahooQuotes.length; i++) {
         const quote = yahooQuotes[i];
-        const { original, mapping } = yahooSymbols[i];
+        if (!quote || !quote.symbol) continue;
+        // Ensure we match the quote to the original symbol requested, in case Yahoo drops some symbols from response
+        const symbolData = yahooSymbols.find(s => s.yahoo === quote.symbol) || yahooSymbols.find(s => s.original === quote.symbol) || { displayName: quote.symbol, name: quote.longName || quote.shortName };
 
         try {
-          const stock = transformYahooQuoteToStock(quote, mapping.displaySymbol, mapping.name);
+          const stock = transformYahooQuoteToStock(quote, (symbolData as any).displayName || quote.symbol, (symbolData as any).name);
           stocks.push(stock);
 
           // Cache individual stock
-          const cacheKey = `quote:${original}`;
+          const cacheKey = `quote:${(symbolData as any).original || quote.symbol}`;
           cacheService.set(cacheKey, stock, 60);
         } catch (error) {
-          logger.error(`Failed to transform quote for ${original}:`, error);
+          logger.error(`Failed to transform quote for ${(symbolData as any).original || quote.symbol}:`, error);
         }
       }
 
@@ -100,19 +138,18 @@ class StocksService {
       return cached;
     }
 
-    // For now, fetch a sample of Indian stocks and sort by change%
-    const sampleSymbols = ['TCS', 'INFY', 'RELIANCE', 'HDFCBANK', 'ICICIBANK', 'WIPRO', 'ITC', 'SBIN'];
+    // Fetch all tracked stocks to find gainers
+    const allSymbols = getAllStockSymbols();
 
     try {
-      const stocks = await this.getBatch(sampleSymbols);
+      const stocks = await this.getBatch(allSymbols);
       const gainers = stocks
         .filter((stock) => stock.changePercent > 0)
         .sort((a, b) => b.changePercent - a.changePercent)
-        .slice(0, 5)
+        .slice(0, 20)
         .map((stock) => ({
-          symbol: stock.symbol,
+          ...stock,
           value: `₹${stock.price.toFixed(2)}`,
-          change: stock.changePercent,
         }));
 
       cacheService.set(cacheKey, gainers as any, 300); // Cache for 5 minutes
@@ -135,19 +172,18 @@ class StocksService {
       return cached;
     }
 
-    // For now, fetch a sample of Indian stocks and sort by change%
-    const sampleSymbols = ['TCS', 'INFY', 'RELIANCE', 'HDFCBANK', 'ICICIBANK', 'WIPRO', 'ITC', 'SBIN'];
+    // Fetch all tracked stocks to find losers
+    const allSymbols = getAllStockSymbols();
 
     try {
-      const stocks = await this.getBatch(sampleSymbols);
+      const stocks = await this.getBatch(allSymbols);
       const losers = stocks
         .filter((stock) => stock.changePercent < 0)
         .sort((a, b) => a.changePercent - b.changePercent)
-        .slice(0, 5)
+        .slice(0, 20)
         .map((stock) => ({
-          symbol: stock.symbol,
+          ...stock,
           value: `₹${stock.price.toFixed(2)}`,
-          change: stock.changePercent,
         }));
 
       cacheService.set(cacheKey, losers as any, 300); // Cache for 5 minutes
@@ -170,16 +206,27 @@ class StocksService {
       return cached;
     }
 
-    // For now, return a sample - ideally would sort by actual volume
-    const sampleSymbols = ['RELIANCE', 'TCS', 'HDFCBANK', 'ICICIBANK', 'INFY'];
+    // Fetch all tracked stocks and sort by volume
+    const allSymbols = getAllStockSymbols();
 
     try {
-      const stocks = await this.getBatch(sampleSymbols);
-      const highVolume = stocks.slice(0, 5).map((stock) => ({
-        symbol: stock.symbol,
-        value: `${(Math.random() * 100).toFixed(1)}M`, // Mock volume for now
-        change: stock.changePercent,
-      }));
+      const stocks = await this.getBatch(allSymbols);
+      const highVolume = stocks
+        .sort((a, b) => b.volume - a.volume)
+        .slice(0, 20)
+        .map((stock) => {
+          // Format volume (e.g., 1.5M, 500K)
+          let formattedVolume = stock.volume.toString();
+          if (stock.volume >= 1000000) {
+            formattedVolume = `${(stock.volume / 1000000).toFixed(1)}M`;
+          } else if (stock.volume >= 1000) {
+            formattedVolume = `${(stock.volume / 1000).toFixed(1)}K`;
+          }
+          return {
+            ...stock,
+            value: formattedVolume,
+          };
+        });
 
       cacheService.set(cacheKey, highVolume as any, 300); // Cache for 5 minutes
       return highVolume as any;
@@ -209,20 +256,35 @@ class StocksService {
         return mapping ? { name, yahoo: mapping.yahooSymbol, displayName: mapping.displayName } : null;
       }).filter((item): item is NonNullable<typeof item> => item !== null);
 
-      // Fetch all indices in batch
-      const yahooQuotesResult = await yahooFinanceApi.getQuotes(yahooSymbols.map((s) => s.yahoo));
-
-      // yahooFinance.quote() returns an array when passed an array of symbols
-      const yahooQuotes = Array.isArray(yahooQuotesResult) ? yahooQuotesResult : [yahooQuotesResult];
+      // Fetch all indices in batch, with fallback to individual queries if batch fails
+      let yahooQuotes: any[] = [];
+      try {
+        const yahooQuotesResult = await yahooFinanceApi.getQuotes(yahooSymbols.map((s) => s.yahoo));
+        yahooQuotes = Array.isArray(yahooQuotesResult) ? yahooQuotesResult : [yahooQuotesResult];
+      } catch (batchError) {
+        logger.warn(`Batch fetch for indices failed, falling back to individual fetches: ${batchError}`);
+        for (const symbolData of yahooSymbols) {
+          try {
+            const quote = await yahooFinanceApi.getQuote(symbolData.yahoo);
+            if (quote) {
+              yahooQuotes.push(quote);
+            }
+          } catch (individualError) {
+            logger.error(`Failed to fetch individual index quote for ${symbolData.displayName}:`, individualError);
+          }
+        }
+      }
 
       // Transform the results
       const indices: MarketIndex[] = [];
       for (let i = 0; i < yahooQuotes.length; i++) {
         const quote = yahooQuotes[i];
-        const { displayName } = yahooSymbols[i];
+        if (!quote || !quote.symbol) continue;
+        const symbolData = yahooSymbols.find(s => s.yahoo === quote.symbol) || yahooSymbols[i];
+        const { displayName } = symbolData;
 
         try {
-          const index = transformYahooIndexToMarketIndex(quote, displayName);
+          const index = transformYahooIndexToMarketIndex(quote, displayName, symbolData.yahoo);
           indices.push(index);
         } catch (error) {
           logger.error(`Failed to transform index ${displayName}:`, error);
@@ -240,8 +302,8 @@ class StocksService {
   /**
    * Get historical data for a stock
    */
-  async getHistoricalData(symbol: string, period: string = '1mo', interval: string = '1d') {
-    const cacheKey = `historical:${symbol}:${period}:${interval}`;
+  async getHistoricalData(symbol: string, period: string = '1mo', interval: string = '1d', customStartDate?: string, customEndDate?: string) {
+    const cacheKey = `historical:${symbol}:${period}:${interval}:${customStartDate || ''}:${customEndDate || ''}`;
 
     // Try to get from cache
     const cached = cacheService.get(cacheKey);
@@ -250,49 +312,57 @@ class StocksService {
     }
 
     const mapping = getStockMapping(symbol);
-    if (!mapping) {
-      throw new Error(`Unknown stock symbol: ${symbol}`);
-    }
+    const yahooSymbol = mapping ? mapping.yahooSymbol : symbol;
 
     try {
-      // Calculate date range based on period
-      const endDate = new Date();
-      const startDate = new Date();
+      let endDate = customEndDate ? new Date(customEndDate) : new Date();
+      let startDate = customStartDate ? new Date(customStartDate) : new Date();
 
-      switch (period) {
-        case '1d':
-          startDate.setDate(endDate.getDate() - 1);
-          break;
-        case '5d':
-          startDate.setDate(endDate.getDate() - 5);
-          break;
-        case '1mo':
-          startDate.setMonth(endDate.getMonth() - 1);
-          break;
-        case '3mo':
-          startDate.setMonth(endDate.getMonth() - 3);
-          break;
-        case '6mo':
-          startDate.setMonth(endDate.getMonth() - 6);
-          break;
-        case '1y':
-          startDate.setFullYear(endDate.getFullYear() - 1);
-          break;
-        case '5y':
-          startDate.setFullYear(endDate.getFullYear() - 5);
-          break;
-        default:
-          startDate.setMonth(endDate.getMonth() - 1);
+      if (!customStartDate && !customEndDate) {
+        // Calculate date range based on period
+        switch (period) {
+          case '1d':
+            // Fetch last 4 days to ensure we always hit at least 1 previous trading day over a long weekend
+            startDate.setDate(endDate.getDate() - 4);
+            break;
+          case '5d':
+            startDate.setDate(endDate.getDate() - 5);
+            break;
+          case '1mo':
+            startDate.setMonth(endDate.getMonth() - 1);
+            break;
+          case '3mo':
+            startDate.setMonth(endDate.getMonth() - 3);
+            break;
+          case '6mo':
+            startDate.setMonth(endDate.getMonth() - 6);
+            break;
+          case '1y':
+            startDate.setFullYear(endDate.getFullYear() - 1);
+            break;
+          case '5y':
+            startDate.setFullYear(endDate.getFullYear() - 5);
+            break;
+          case '15y':
+            startDate.setFullYear(endDate.getFullYear() - 15);
+            break;
+          default:
+            startDate.setMonth(endDate.getMonth() - 1);
+        }
       }
 
-      const data = await yahooFinanceApi.getHistoricalData(
-        mapping.yahooSymbol,
+      let data = await yahooFinanceApi.getHistoricalData(
+        yahooSymbol,
         startDate,
         endDate,
-        interval as '1d' | '1wk' | '1mo'
+        interval
       );
 
-      // Cache for 5 minutes for historical data
+      // Filter exactly down to the last trading day if the period requested was strictly 1 day
+      if (period === '1d' && data.length > 0) {
+        const latestDayStr = new Date(data[data.length - 1].date).toDateString();
+        data = data.filter((q: any) => new Date(q.date).toDateString() === latestDayStr);
+      }      // Cache for 5 minutes for historical data
       cacheService.set(cacheKey, data, 300);
       return data;
     } catch (error) {

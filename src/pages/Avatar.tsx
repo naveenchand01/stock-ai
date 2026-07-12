@@ -1,18 +1,36 @@
 import { DashboardLayout } from "@/components/layout/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { newsItems, watchlistStocks } from "@/data/mockData";
-import { ArrowLeft, Volume2, TrendingUp, Newspaper, LineChart, HelpCircle } from "lucide-react";
+import { AIChat } from "@/components/ai/AIChat";
+import { useWatchlist } from "@/hooks/useWatchlist";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabaseService } from "@/services/supabase.service";
+import { ArrowLeft, Sparkles, Bot, MessageCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
 
 const Avatar = () => {
-  const [selectedStock] = useState(watchlistStocks[0]);
-  const [selectedTimeframe, setSelectedTimeframe] = useState("1D");
-  const [isPlaying, setIsPlaying] = useState(true);
+  const { user } = useAuth();
+  const { watchlist } = useWatchlist();
+  const [selectedStock, setSelectedStock] = useState<string | undefined>(undefined);
+  const [userPersona, setUserPersona] = useState<string | undefined>(undefined);
+  const [userInterests, setUserInterests] = useState<string[] | undefined>(undefined);
 
-  const timeframes = ["1D", "1W", "1M", "3M", "1Y"];
-  const sentimentScore = 78;
+  useEffect(() => {
+    async function loadPersona() {
+      if (!user?.uid) return;
+      try {
+        const profile = await supabaseService.getProfile(user.uid);
+        if (profile) {
+          setUserPersona(profile.persona);
+          setUserInterests(profile.interests);
+        }
+      } catch (err) {
+        console.error("Failed to load persona for Avatar:", err);
+      }
+    }
+    loadPersona();
+  }, [user]);
 
   return (
     <DashboardLayout>
@@ -23,205 +41,145 @@ const Avatar = () => {
         </Link>
       </div>
 
-      {/* Top Bar */}
+      {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="glass-card p-4 mb-6"
+        className="glass-card p-6 mb-6"
       >
-        <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2">
-              <span className="text-muted-foreground">Selected Stock:</span>
-              <span className="font-semibold text-lg">{selectedStock.symbol}</span>
+            <div className="w-16 h-16 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center">
+              <Bot className="h-8 w-8 text-primary" />
             </div>
-            <div className="h-6 w-px bg-border" />
-            <div className="flex gap-2">
-              {timeframes.map((tf) => (
-                <Button
-                  key={tf}
-                  variant={selectedTimeframe === tf ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setSelectedTimeframe(tf)}
-                >
-                  {tf}
-                </Button>
-              ))}
+            <div>
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                AI Stock Assistant
+                <Sparkles className="h-5 w-5 text-primary animate-pulse" />
+              </h1>
+              <p className="text-muted-foreground">
+                Ask me anything about the stock market
+              </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className={`font-mono ${selectedStock.change >= 0 ? "text-success" : "text-destructive"}`}>
-              ${selectedStock.price.toFixed(2)}
-            </span>
-            <span className={`font-mono text-sm ${selectedStock.change >= 0 ? "text-success" : "text-destructive"}`}>
-              ({selectedStock.change >= 0 ? "+" : ""}{selectedStock.changePercent.toFixed(2)}%)
-            </span>
-          </div>
+
+          {watchlist.length > 0 && (
+            <div className="text-sm text-muted-foreground">
+              Tracking {watchlist.length} stock{watchlist.length !== 1 ? 's' : ''} in your watchlist
+            </div>
+          )}
         </div>
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Video Area */}
+        {/* Main Chat Area */}
         <motion.div
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           className="lg:col-span-2"
         >
-          <div className="glass-card overflow-hidden">
-            {/* Video Container */}
-            <div className="aspect-video bg-secondary relative">
-              <div className="absolute inset-0 chart-grid opacity-10" />
-              <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" />
-              
-              {/* Avatar Visualization */}
-              <div className="absolute inset-0 flex items-center justify-center">
-                <motion.div
-                  animate={{ scale: isPlaying ? [1, 1.02, 1] : 1 }}
-                  transition={{ duration: 2, repeat: isPlaying ? Infinity : 0 }}
-                  className="relative"
-                >
-                  <div className="w-48 h-48 rounded-full bg-primary/10 border-2 border-primary/30 flex items-center justify-center">
-                    <div className="w-36 h-36 rounded-full bg-primary/20 border border-primary/50 flex items-center justify-center animate-pulse-glow">
-                      <Volume2 className="h-16 w-16 text-primary" />
-                    </div>
-                  </div>
-                  {/* Audio Waves */}
-                  {isPlaying && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <motion.div
-                        animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity }}
-                        className="absolute w-48 h-48 rounded-full border border-primary/30"
-                      />
-                      <motion.div
-                        animate={{ scale: [1, 1.5], opacity: [0.5, 0] }}
-                        transition={{ duration: 1.5, repeat: Infinity, delay: 0.5 }}
-                        className="absolute w-48 h-48 rounded-full border border-primary/30"
-                      />
-                    </div>
-                  )}
-                </motion.div>
-              </div>
-
-              {/* Subtitle */}
-              <div className="absolute bottom-0 left-0 right-0 p-6">
-                <motion.p
-                  key={isPlaying ? "playing" : "paused"}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="text-center text-lg"
-                >
-                  {isPlaying 
-                    ? `"${selectedStock.symbol} ${selectedStock.change >= 0 ? 'rises' : 'falls'} ${Math.abs(selectedStock.changePercent).toFixed(1)}% after quarterly earnings ${selectedStock.change >= 0 ? 'beat expectations' : 'missed targets'}. The stock shows ${selectedStock.change >= 0 ? 'strong momentum' : 'weakness'} in today's trading session..."`
-                    : "Click play to start the AI briefing"}
-                </motion.p>
-              </div>
+          <div className="glass-card h-[calc(100vh-280px)] flex flex-col">
+            {/* Chat Header */}
+            <div className="p-4 border-b border-border flex items-center gap-2">
+              <MessageCircle className="h-5 w-5 text-primary" />
+              <h2 className="font-semibold">Chat with AI Assistant</h2>
+              {selectedStock && (
+                <span className="ml-auto text-sm text-muted-foreground">
+                  Analyzing: <span className="font-mono text-foreground">{selectedStock}</span>
+                </span>
+              )}
             </div>
 
-            {/* Controls */}
-            <div className="p-4 border-t border-border">
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                {/* Sentiment Widget */}
-                <div className="flex items-center gap-3">
-                  <div className="text-sm text-muted-foreground">Sentiment Score</div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-32 h-2 rounded-full bg-secondary overflow-hidden">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${sentimentScore}%` }}
-                        transition={{ duration: 1, delay: 0.5 }}
-                        className="h-full bg-success rounded-full"
-                      />
-                    </div>
-                    <span className="font-mono text-sm text-success">{sentimentScore}%</span>
-                  </div>
-                </div>
-
-                {/* Volume Indicator */}
-                <div className="flex items-center gap-2 text-sm">
-                  <TrendingUp className="h-4 w-4 text-warning" />
-                  <span className="text-muted-foreground">Volume Spike Detected</span>
-                </div>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3 mt-4">
-                <Button variant="glass" className="flex-1 min-w-32">
-                  <Newspaper className="h-4 w-4 mr-2" />
-                  Summarize News
-                </Button>
-                <Button variant="glass" className="flex-1 min-w-32">
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Predict Trend
-                </Button>
-                <Button variant="glass" className="flex-1 min-w-32">
-                  <LineChart className="h-4 w-4 mr-2" />
-                  Show Chart
-                </Button>
-                <Button variant="glass" className="flex-1 min-w-32">
-                  <HelpCircle className="h-4 w-4 mr-2" />
-                  Explain Reason
-                </Button>
-              </div>
-            </div>
-          </div>
-
-          {/* Play/Pause Control */}
-          <div className="flex justify-center mt-4">
-            <Button
-              variant={isPlaying ? "outline" : "hero"}
-              size="lg"
-              onClick={() => setIsPlaying(!isPlaying)}
-            >
-              {isPlaying ? "Pause Briefing" : "Resume Briefing"}
-            </Button>
+            {/* Chat Component */}
+            <AIChat symbol={selectedStock} watchlist={watchlist} persona={userPersona} interests={userInterests} />
           </div>
         </motion.div>
 
-        {/* News Panel */}
+        {/* Sidebar - Watchlist & Context */}
         <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.2 }}
-          className="lg:col-span-1"
+          className="lg:col-span-1 space-y-4"
         >
-          <div className="glass-card p-4 h-full">
+          {/* Your Watchlist */}
+          <div className="glass-card p-4">
             <h3 className="font-semibold mb-4 flex items-center gap-2">
-              <Newspaper className="h-5 w-5 text-primary" />
-              Latest News Headlines
+              <Sparkles className="h-4 w-4 text-primary" />
+              Your Watchlist
             </h3>
-            <div className="space-y-4">
-              {newsItems.slice(0, 5).map((news) => (
-                <motion.div
-                  key={news.id}
-                  whileHover={{ x: 4 }}
-                  className="p-3 rounded-lg bg-secondary/50 hover:bg-secondary cursor-pointer transition-colors"
-                >
-                  <h4 className="text-sm font-medium mb-2 line-clamp-2">
-                    {news.headline}
-                  </h4>
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>{news.source}</span>
-                    <span>{news.time}</span>
-                  </div>
-                  <div className="mt-2">
-                    <div className="flex items-center gap-2">
-                      <div className="flex-1 h-1.5 rounded-full bg-secondary overflow-hidden">
-                        <div
-                          className={`h-full rounded-full ${
-                            news.sentiment > 0 ? "bg-success" : "bg-destructive"
-                          }`}
-                          style={{ width: `${Math.abs(news.sentiment) * 100}%` }}
-                        />
-                      </div>
-                      <span className={`text-xs ${news.sentiment > 0 ? "text-success" : "text-destructive"}`}>
-                        {news.sentiment > 0 ? "+" : ""}{(news.sentiment * 100).toFixed(0)}%
-                      </span>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
+
+            {watchlist.length > 0 ? (
+              <div className="space-y-2">
+                {watchlist.map((stock) => (
+                  <Button
+                    key={stock}
+                    variant={selectedStock === stock ? "default" : "outline"}
+                    className="w-full justify-start"
+                    onClick={() => setSelectedStock(stock === selectedStock ? undefined : stock)}
+                  >
+                    <span className="font-mono">{stock}</span>
+                    {selectedStock === stock && (
+                      <Sparkles className="h-3 w-3 ml-auto" />
+                    )}
+                  </Button>
+                ))}
+
+                {selectedStock && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full"
+                    onClick={() => setSelectedStock(undefined)}
+                  >
+                    Clear Selection
+                  </Button>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-muted-foreground text-sm">
+                <p>No stocks in your watchlist.</p>
+                <p className="mt-2">Add stocks from the Dashboard to get started!</p>
+              </div>
+            )}
+          </div>
+
+          {/* AI Capabilities */}
+          <div className="glass-card p-4">
+            <h3 className="font-semibold mb-3">What I Can Do</h3>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
+                <span>Analyze stock performance and trends</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
+                <span>Explain market movements and news</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
+                <span>Provide trading insights and patterns</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
+                <span>Answer investment questions</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <div className="h-1.5 w-1.5 rounded-full bg-primary mt-1.5 flex-shrink-0"></div>
+                <span>Speak responses with voice synthesis</span>
+              </li>
+            </ul>
+          </div>
+
+          {/* Tips */}
+          <div className="glass-card p-4 bg-primary/5 border-primary/20">
+            <h3 className="font-semibold mb-2 text-primary">💡 Pro Tips</h3>
+            <ul className="space-y-1 text-xs text-muted-foreground">
+              <li>• Select a stock for context-aware analysis</li>
+              <li>• Try "Explain why [STOCK] is moving"</li>
+              <li>• Ask for comparisons between stocks</li>
+              <li>• Toggle voice to hear responses</li>
+            </ul>
           </div>
         </motion.div>
       </div>

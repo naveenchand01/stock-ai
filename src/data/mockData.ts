@@ -1,38 +1,37 @@
 // Mock data for the application
 
 export const watchlistStocks = [
-  { symbol: "AAPL", name: "Apple Inc.", price: 178.52, change: 2.13, changePercent: 1.21 },
-  { symbol: "TSLA", name: "Tesla Inc.", price: 248.31, change: -5.24, changePercent: -2.07 },
-  { symbol: "TCS", name: "Tata Consultancy", price: 3542.80, change: 24.55, changePercent: 0.70 },
-  { symbol: "GOOGL", name: "Alphabet Inc.", price: 141.80, change: 1.45, changePercent: 1.03 },
-  { symbol: "MSFT", name: "Microsoft Corp.", price: 378.91, change: 4.82, changePercent: 1.29 },
-  { symbol: "AMZN", name: "Amazon.com Inc.", price: 178.25, change: -1.23, changePercent: -0.69 },
+  { symbol: "RELIANCE", name: "Reliance Industries", price: 2954.20, change: 12.45, changePercent: 0.42 },
+  { symbol: "TCS", name: "Tata Consultancy", price: 3942.80, change: 24.55, changePercent: 0.70 },
+  { symbol: "HDFCBANK", name: "HDFC Bank", price: 1445.60, change: -5.20, changePercent: -0.36 },
+  { symbol: "INFY", name: "Infosys", price: 1422.30, change: 15.40, changePercent: 1.09 },
+  { symbol: "ITC", name: "ITC Limited", price: 428.95, change: 2.15, changePercent: 0.50 },
+  { symbol: "SBIN", name: "State Bank of India", price: 812.45, change: -3.25, changePercent: -0.40 },
 ];
 
 export const marketIndices = [
   { name: "NIFTY 50", value: 22456.50, change: 101.25, changePercent: 0.45 },
   { name: "SENSEX", value: 73872.30, change: -238.45, changePercent: -0.32 },
-  { name: "NASDAQ", value: 15832.80, change: 47.42, changePercent: 0.30 },
-  { name: "S&P 500", value: 5069.53, change: 28.94, changePercent: 0.57 },
-  { name: "DOW JONES", value: 38671.69, change: -94.54, changePercent: -0.24 },
+  { name: "BANKNIFTY", value: 47832.80, change: 147.42, changePercent: 0.30 },
+  { name: "NIFTY IT", value: 35069.53, change: 228.94, changePercent: 0.65 },
 ];
 
 export const topGainers = [
-  { symbol: "NVDA", value: "$875.38", change: 5.24 },
-  { symbol: "META", value: "$505.95", change: 3.87 },
-  { symbol: "AMD", value: "$172.42", change: 3.12 },
+  { symbol: "TATASTEEL", value: "₹155.38", change: 5.24 },
+  { symbol: "M&M", value: "₹2105.95", change: 3.87 },
+  { symbol: "WIPRO", value: "₹472.42", change: 3.12 },
 ];
 
 export const topLosers = [
-  { symbol: "BA", value: "$180.54", change: -4.23 },
-  { symbol: "NKE", value: "$93.87", change: -2.89 },
-  { symbol: "DIS", value: "$110.23", change: -1.98 },
+  { symbol: "BAJAJFINSV", value: "₹1580.54", change: -4.23 },
+  { symbol: "ASIANPAINT", value: "₹2893.87", change: -2.89 },
+  { symbol: "MARUTI", value: "₹11110.23", change: -1.98 },
 ];
 
 export const highVolume = [
-  { symbol: "AAPL", value: "82.3M", change: 1.21 },
-  { symbol: "NVDA", value: "61.8M", change: 5.24 },
-  { symbol: "TSLA", value: "47.2M", change: -2.07 },
+  { symbol: "HDFCBANK", value: "82.3M", change: -0.36 },
+  { symbol: "TATASTEEL", value: "61.8M", change: 5.24 },
+  { symbol: "RELIANCE", value: "47.2M", change: 0.42 },
 ];
 
 export const generateChartData = (points: number, trend: "up" | "down" | "volatile") => {

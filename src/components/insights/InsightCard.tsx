@@ -8,6 +8,7 @@ interface InsightCardProps {
     symbol: string;
     value: string;
     change: number;
+    changePercent: number;
   }[];
 }
 
@@ -28,8 +29,8 @@ export function InsightCard({ title, icon: Icon, items }: InsightCardProps) {
             <span className="font-medium text-sm">{item.symbol}</span>
             <div className="flex items-center gap-2">
               <span className="text-muted-foreground text-sm">{item.value}</span>
-              <span className={`font-mono text-xs ${item.change >= 0 ? "text-success" : "text-destructive"}`}>
-                {item.change >= 0 ? "+" : ""}{item.change}%
+              <span className={`font-mono text-xs ${(item.changePercent ?? item.change) >= 0 ? "text-success" : "text-destructive"}`}>
+                {(item.changePercent ?? item.change) >= 0 ? "+" : ""}{(item.changePercent ?? item.change ?? 0).toFixed(2)}%
               </span>
             </div>
           </div>

@@ -82,12 +82,48 @@ export const useMarketIndices = (): UseQueryResult<MarketIndex[], Error> => {
 export const useHistoricalData = (
   symbol: string,
   period: string = '1mo',
-  interval: string = '1d'
+  interval: string = '1d',
+  startDate?: string,
+  endDate?: string
 ): UseQueryResult<HistoricalData[], Error> => {
   return useQuery({
-    queryKey: ['stocks', 'historical', symbol, period, interval],
-    queryFn: () => stocksApi.getHistoricalData(symbol, period, interval),
+    queryKey: ['stocks', 'historical', symbol, period, interval, startDate, endDate],
+    queryFn: () => stocksApi.getHistoricalData(symbol, period, interval, startDate, endDate),
     staleTime: 300000, // 5 minutes
+    enabled: !!symbol,
+  });
+};
+
+/**
+ * Hook to fetch prediction forecast data
+ */
+export const useStockForecast = (
+  symbol: string,
+  model: string = 'LSTM',
+  days: number = 30
+): UseQueryResult<{
+  symbol: string;
+  model_type: string;
+  forecast_days: number;
+  forecast: { date: string; price: number }[];
+}, Error> => {
+  return useQuery({
+    queryKey: ['stocks', 'forecast', symbol, model, days],
+    queryFn: () => stocksApi.getForecast(symbol, model, days),
+    staleTime: 300000, // 5 minutes
+    enabled: !!symbol,
+  });
+};
+
+/**
+ * Hook to fetch prediction comparison data (formula calculations vs live data)
+ */
+export const useStockForecastComparison = (symbol: string): UseQueryResult<any, Error> => {
+  return useQuery({
+    queryKey: ['stocks', 'forecast-comparison', symbol],
+    queryFn: () => stocksApi.getForecastComparison(symbol),
+    staleTime: 10000, // 10 seconds cache for live comparisons
+    refetchInterval: 10000, // Auto-refresh every 10 seconds
     enabled: !!symbol,
   });
 };

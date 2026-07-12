@@ -4,6 +4,7 @@ export interface Stock {
   price: number;
   change: number;
   changePercent: number;
+  volume: number;
 }
 
 export interface StockQuote extends Stock {
@@ -11,13 +12,10 @@ export interface StockQuote extends Stock {
   high?: number;
   low?: number;
   close?: number;
-  volume?: number;
 }
 
-export interface TopStock {
-  symbol: string;
+export interface TopStock extends Stock {
   value: string;
-  change: number;
 }
 
 export interface MarketIndex {
@@ -25,6 +23,7 @@ export interface MarketIndex {
   value: number;
   change: number;
   changePercent: number;
+  symbol?: string;
 }
 
 export interface HistoricalData {
@@ -35,4 +34,12 @@ export interface HistoricalData {
   close: number;
   volume: number;
   adjClose?: number;
+}
+
+export interface SearchResult {
+  symbol: string;
+  shortname?: string;
+  longname?: string;
+  exchange?: string;
+  quoteType?: string;
 }
