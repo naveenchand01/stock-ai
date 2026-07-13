@@ -11,8 +11,8 @@
       04_mape_heatmap.png                - MAPE heatmap: stocks × models
       05_directional_accuracy.png        - Directional accuracy bar chart
       06_f1_score_heatmap.png            - F1-Score heatmap
-      07_best_model_r2_top15.png         - Top 15 stocks by R² (CNN-LSTM)
-      08_cnnlstm_scatter_r2.png          - R² scatter: CNN-LSTM vs LSTM
+      07_best_model_r2_top15.png         - Top 15 stocks by R² (ARIMA-LSTM)
+      08_cnnlstm_scatter_r2.png          - R² scatter: ARIMA-LSTM vs LSTM
     dissertation_table.xlsx              - Excel workbook with formatted tables
     dissertation_report.html             - Full HTML report (open in browser)
 
@@ -112,8 +112,8 @@ for pv in [pv_rmse, pv_mape, pv_r2, pv_acc, pv_prec, pv_rec, pv_f1]:
             pv[col] = np.nan
     pv = pv[MODEL_ORDER]
 
-# CNN-LSTM best-model frame
-cnn = df_raw[df_raw["Model"] == "CNN-LSTM"].set_index("Symbol")
+# ARIMA-LSTM best-model frame
+al = df_raw[df_raw["Model"] == "ARIMA-LSTM"].set_index("Symbol")
 
 # ---------------------------------------------------------------------------
 # Figure 1 – Average MAPE by Model (bar chart)
@@ -296,22 +296,22 @@ plt.close()
 print(f"  Saved: {p6}")
 
 # ---------------------------------------------------------------------------
-# Figure 7 – Top 15 stocks by CNN-LSTM R² (horizontal bar)
+# Figure 7 – Top 15 stocks by ARIMA-LSTM R² (horizontal bar)
 # ---------------------------------------------------------------------------
-print("[7/8] Top 15 CNN-LSTM R² …")
-cnn_r2 = cnn["R2"].dropna().sort_values(ascending=False).head(15)
+print("[7/8] Top 15 ARIMA-LSTM R² …")
+al_r2 = al["R2"].dropna().sort_values(ascending=False).head(15)
 
 fig, ax = plt.subplots(figsize=(9, 6))
-colors_bar = ["#2E8B57" if v >= 0.9 else "#5CB878" if v >= 0.7 else "#A8D5B5" for v in cnn_r2.values]
-bars = ax.barh(cnn_r2.index, cnn_r2.values, color=colors_bar, edgecolor="white")
-for bar, val in zip(bars, cnn_r2.values):
+colors_bar = ["#2E8B57" if v >= 0.9 else "#5CB878" if v >= 0.7 else "#A8D5B5" for v in al_r2.values]
+bars = ax.barh(al_r2.index, al_r2.values, color=colors_bar, edgecolor="white")
+for bar, val in zip(bars, al_r2.values):
     ax.text(val - 0.01, bar.get_y() + bar.get_height()/2,
             f"{val:.4f}", va="center", ha="right", fontsize=9,
             color="white" if val > 0.5 else "#333")
 
 ax.axvline(0.9, color="#aaa", linewidth=1, linestyle="--", label="R²=0.90 threshold")
-ax.set_xlabel("R² Score (CNN-LSTM)", **FONT_AXIS)
-ax.set_title("Top 15 Nifty 50 Stocks — CNN-LSTM R² Score\n(Train: 13 yrs | Test: 2 yrs | Higher = Better)", **FONT_TITLE)
+ax.set_xlabel("R² Score (ARIMA-LSTM)", **FONT_AXIS)
+ax.set_title("Top 15 Nifty 50 Stocks — ARIMA-LSTM R² Score\n(Train: 13 yrs | Test: 2 yrs | Higher = Better)", **FONT_TITLE)
 ax.invert_yaxis()
 ax.set_xlim(0, 1.05)
 ax.legend(fontsize=9)
@@ -328,31 +328,31 @@ plt.close()
 print(f"  Saved: {p7}")
 
 # ---------------------------------------------------------------------------
-# Figure 8 – CNN-LSTM vs LSTM R² scatter
+# Figure 8 – ARIMA-LSTM vs LSTM R² scatter
 # ---------------------------------------------------------------------------
-print("[8/8] CNN-LSTM vs LSTM R² scatter …")
+print("[8/8] ARIMA-LSTM vs LSTM R² scatter …")
 lstm_r2  = df_raw[df_raw["Model"] == "LSTM"].set_index("Symbol")["R2"]
-cnn_r2_s = df_raw[df_raw["Model"] == "CNN-LSTM"].set_index("Symbol")["R2"]
-common = lstm_r2.index.intersection(cnn_r2_s.index)
+al_r2_s = df_raw[df_raw["Model"] == "ARIMA-LSTM"].set_index("Symbol")["R2"]
+common = lstm_r2.index.intersection(al_r2_s.index)
 
 fig, ax = plt.subplots(figsize=(8, 7))
 x = lstm_r2.loc[common].values
-y = cnn_r2_s.loc[common].values
+y = al_r2_s.loc[common].values
 ax.scatter(x, y, s=60, alpha=0.75, c="#2E8B57", edgecolors="white", linewidth=0.8)
 for sym in common:
-    if abs(cnn_r2_s[sym] - lstm_r2[sym]) > 0.15 or cnn_r2_s[sym] > 0.85:
-        ax.annotate(sym, (lstm_r2[sym], cnn_r2_s[sym]),
+    if abs(al_r2_s[sym] - lstm_r2[sym]) > 0.15 or al_r2_s[sym] > 0.85:
+        ax.annotate(sym, (lstm_r2[sym], al_r2_s[sym]),
                     textcoords="offset points", xytext=(5, 4), fontsize=7, color="#555")
 
 lims = [min(x.min(), y.min()) - 0.1, max(x.max(), y.max()) + 0.1]
-ax.plot(lims, lims, "k--", linewidth=1, alpha=0.4, label="LSTM = CNN-LSTM line")
+ax.plot(lims, lims, "k--", linewidth=1, alpha=0.4, label="LSTM = ARIMA-LSTM line")
 ax.axhline(0, color="#ddd", linewidth=0.8); ax.axvline(0, color="#ddd", linewidth=0.8)
 ax.set_xlabel("LSTM R² Score", **FONT_AXIS)
-ax.set_ylabel("CNN-LSTM R² Score", **FONT_AXIS)
-ax.set_title("CNN-LSTM vs LSTM — R² Comparison\n(Points above diagonal = CNN-LSTM wins)", **FONT_TITLE)
+ax.set_ylabel("ARIMA-LSTM R² Score", **FONT_AXIS)
+ax.set_title("ARIMA-LSTM vs LSTM — R² Comparison\n(Points above diagonal = ARIMA-LSTM wins)", **FONT_TITLE)
 ax.legend(fontsize=9)
 above = np.sum(y > x)
-ax.text(0.05, 0.95, f"CNN-LSTM wins: {above}/{len(common)} stocks",
+ax.text(0.05, 0.95, f"ARIMA-LSTM wins: {above}/{len(common)} stocks",
         transform=ax.transAxes, fontsize=10, color="#2E8B57",
         bbox=dict(boxstyle="round,pad=0.3", facecolor="white", edgecolor="#2E8B57", alpha=0.8))
 plt.tight_layout()
@@ -382,12 +382,12 @@ try:
     model_fills = {
         "ARIMA":         "A8C4E0",
         "SARIMA":        "6FA8D0",
-        "ARIMA-LSTM": "F4D0A0",
         "XGBoost":       "F4A460",
         "LSTM":          "B0D8B0",
-        "CNN-LSTM":      "2E8B57",
+        "CNN-LSTM":      "32CD32",
+        "ARIMA-LSTM":    "2E8B57",
     }
-    model_fonts = {"CNN-LSTM": Font(color="FFFFFF", bold=True, size=9)}
+    model_fonts = {"ARIMA-LSTM": Font(color="FFFFFF", bold=True, size=9)}
 
     cols = ["Symbol", "Model", "RMSE", "MAE", "MAPE", "Accuracy (%)", "R2",
             "Directional_Accuracy", "Precision", "Recall", "F1_Score"]
@@ -424,7 +424,7 @@ try:
     ws2 = wb.create_sheet("ARIMA-LSTM Summary")
     sum_cols = ["Symbol", "RMSE", "MAE", "MAPE", "Accuracy (%)", "R2",
                 "Directional_Accuracy", "Precision", "Recall", "F1_Score"]
-    cnn_df = df_raw[df_raw["Model"] == "ARIMA-LSTM"][sum_cols].sort_values("R2", ascending=False)
+    al_df = df_raw[df_raw["Model"] == "ARIMA-LSTM"][sum_cols].sort_values("R2", ascending=False)
 
     for ci, col in enumerate(sum_cols, 1):
         cell = ws2.cell(row=1, column=ci, value=col)
@@ -432,7 +432,7 @@ try:
         cell.font = Font(color="FFFFFF", bold=True, size=10)
         cell.alignment = Alignment(horizontal="center")
 
-    for ri, row in enumerate(cnn_df.itertuples(index=False), 2):
+    for ri, row in enumerate(al_df.itertuples(index=False), 2):
         r2val = row.R2
         if r2val > 0.9:
             row_fill = PatternFill("solid", fgColor="C8EFCE")
@@ -479,7 +479,7 @@ try:
                 cell.number_format = "0.0000"
             else:
                 cell.value = val
-            cell.font      = Font(size=9, bold=(model=="CNN-LSTM"))
+            cell.font      = Font(size=9, bold=(model=="ARIMA-LSTM"))
             cell.alignment = Alignment(horizontal="center")
 
     for ci in range(1, len(avg_df.columns) + 1):
@@ -546,7 +546,7 @@ avg_df_display = (
     .reset_index()
 )
 
-cnn_top = (
+al_top = (
     df_raw[df_raw["Model"] == "ARIMA-LSTM"][[
         "Symbol", "RMSE", "MAE", "MAPE", "Accuracy (%)", "R2",
         "Directional_Accuracy", "Precision", "Recall", "F1_Score"
@@ -556,15 +556,15 @@ cnn_top = (
 )
 
 # Placeholder → value mapping
-cnn = df_raw[df_raw["Model"] == "ARIMA-LSTM"]
+al = df_raw[df_raw["Model"] == "ARIMA-LSTM"]
 replacements = {
     "{{NUM_SYMBOLS}}":    str(df_raw["Symbol"].nunique()),
-    "{{AL_AVG_R2}}":      f"{cnn['R2'].mean():.3f}",
-    "{{AL_AVG_MAPE}}":    f"{cnn['MAPE'].mean():.2f}",
-    "{{R2_ABOVE_90}}":    str(int((cnn["R2"] > 0.9).sum())),
-    "{{R2_ABOVE_0}}":     str(int((cnn["R2"] > 0.0).sum())),
+    "{{AL_AVG_R2}}":      f"{al['R2'].mean():.3f}",
+    "{{AL_AVG_MAPE}}":    f"{al['MAPE'].mean():.2f}",
+    "{{R2_ABOVE_90}}":    str(int((al["R2"] > 0.9).sum())),
+    "{{R2_ABOVE_0}}":     str(int((al["R2"] > 0.0).sum())),
     "{{TABLE_AVERAGES}}": df_to_html(avg_df_display),
-    "{{TABLE_AL}}":       df_to_html(cnn_top.reset_index(drop=True),
+    "{{TABLE_AL}}":       df_to_html(al_top.reset_index(drop=True),
                                      highlight_col="R2", green_if_high=True),
     "{{FIG_1}}": fig_tag(p1, "Figure 1: Average MAPE by Model — lower is better"),
     "{{FIG_2}}": fig_tag(p2, "Figure 2: Average RMSE and R² by Model"),
