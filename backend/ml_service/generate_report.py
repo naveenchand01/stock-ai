@@ -38,7 +38,7 @@ warnings.filterwarnings("ignore")
 # ---------------------------------------------------------------------------
 # Paths
 # ---------------------------------------------------------------------------
-MASTER_CSV  = os.path.join("dissertation_results", "NIFTY50_master_dissertation_metrics.csv")
+MASTER_CSV  = os.path.join("dissertation_results", "Metrix_csv", "NIFTY50_master_dissertation_metrics.csv")
 REPORT_DIR  = os.path.join("dissertation_results", "report")
 FIG_DIR     = os.path.join(REPORT_DIR, "figures")
 EXCEL_PATH  = os.path.join(REPORT_DIR, "dissertation_table.xlsx")
