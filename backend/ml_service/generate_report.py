@@ -390,7 +390,7 @@ try:
     model_fonts = {"ARIMA-LSTM": Font(color="FFFFFF", bold=True, size=9)}
 
     cols = ["Symbol", "Model", "RMSE", "MAE", "MAPE", "Accuracy (%)", "R2",
-            "Directional_Accuracy", "Precision", "Recall", "F1_Score"]
+            "Precision", "Recall", "F1_Score"]
     df_export = df_raw[cols].copy()
     df_export = df_export.sort_values(["Symbol", "Model"])
 
@@ -423,7 +423,7 @@ try:
     # --- Sheet 2: ARIMA-LSTM Summary ---
     ws2 = wb.create_sheet("ARIMA-LSTM Summary")
     sum_cols = ["Symbol", "RMSE", "MAE", "MAPE", "Accuracy (%)", "R2",
-                "Directional_Accuracy", "Precision", "Recall", "F1_Score"]
+                "Precision", "Recall", "F1_Score"]
     al_df = df_raw[df_raw["Model"] == "ARIMA-LSTM"][sum_cols].sort_values("R2", ascending=False)
 
     for ci, col in enumerate(sum_cols, 1):
@@ -460,7 +460,7 @@ try:
     # --- Sheet 3: Model average summary ---
     ws3 = wb.create_sheet("Model Average Summary")
     avg_df = df_raw.groupby("Model")[["RMSE","MAE","MAPE","Accuracy (%)","R2",
-                                      "Directional_Accuracy","Precision","Recall","F1_Score"]].mean()
+                                      "Precision","Recall","F1_Score"]].mean()
     avg_df = avg_df.reindex(MODEL_ORDER).reset_index()
 
     for ci, col in enumerate(avg_df.columns, 1):
@@ -539,7 +539,7 @@ def df_to_html(df, highlight_col=None, green_if_high=True):
 avg_df_display = (
     df_raw.groupby("Model")[
         ["RMSE", "MAE", "MAPE", "Accuracy (%)", "R2",
-         "Directional_Accuracy", "Precision", "Recall", "F1_Score"]
+         "Precision", "Recall", "F1_Score"]
     ].mean()
     .reindex(MODEL_ORDER)
     .round(4)
@@ -549,7 +549,7 @@ avg_df_display = (
 al_top = (
     df_raw[df_raw["Model"] == "ARIMA-LSTM"][[
         "Symbol", "RMSE", "MAE", "MAPE", "Accuracy (%)", "R2",
-        "Directional_Accuracy", "Precision", "Recall", "F1_Score"
+        "Precision", "Recall", "F1_Score"
     ]]
     .sort_values("R2", ascending=False)
     .round(4)
