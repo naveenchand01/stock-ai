@@ -16,6 +16,7 @@ interface NewsItem {
   time: string;
   category: string;
   sentiment: number;
+  summary?: string;
   url?: string;
 }
 
@@ -333,8 +334,13 @@ const News = () => {
                 >
                   <div className="flex gap-4">
                     <div className="flex-1">
-                      <h4 className="font-medium mb-2">{news.headline}</h4>
-                      <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                      <h4 className="font-medium mb-1">{news.headline}</h4>
+                      {news.summary && (
+                        <p className="text-sm text-muted-foreground mb-2 line-clamp-2">
+                          {news.summary}
+                        </p>
+                      )}
+                      <div className="flex items-center gap-4 text-xs text-muted-foreground">
                         <span>{news.source}</span>
                         <span>{news.time}</span>
                         <span className="capitalize px-2 py-0.5 rounded-full bg-secondary text-xs">

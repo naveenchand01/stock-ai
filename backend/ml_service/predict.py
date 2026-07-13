@@ -110,12 +110,12 @@ def predict_ml_model(symbol, model_type, forecast_days=30, lookback_window=60):
         
     return forecast_result
 
-def predict_hybrid(symbol, forecast_days=30):
+def predict_arima_lstm(symbol, forecast_days=30):
     """
-    Performs hybrid ARIMA-LSTM prediction.
+    Performs ARIMA-LSTM prediction.
     As described in Nensi et al. (2025).
     """
-    from train_hybrid import ResidualLSTM, train_hybrid_model
+    from train_arima_lstm import ResidualLSTM, train_arima_lstm_model
     from statsmodels.tsa.arima.model import ARIMA
     import torch
     
@@ -125,11 +125,11 @@ def predict_hybrid(symbol, forecast_days=30):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     
     for col in cols:
-        model_path = os.path.join("models", f"hybrid_lstm_{symbol}_{col}.pth")
-        scaler_path = os.path.join("models", f"hybrid_scaler_{symbol}_{col}.pkl")
+        model_path = os.path.join("models", f"arima_lstm_{symbol}_{col}.pth")
+        scaler_path = os.path.join("models", f"arima_lstm_scaler_{symbol}_{col}.pkl")
         if not os.path.exists(model_path) or not os.path.exists(scaler_path):
-            print(f"Hybrid ARIMA-LSTM model/scaler missing for {symbol} ({col}). Training...")
-            train_hybrid_model(symbol, epochs=10) # Lowered epochs for auto-train speed
+            print(f"ARIMA-LSTM model/scaler missing for {symbol} ({col}). Training...")
+            train_arima_lstm_model(symbol, epochs=10) # Lowered epochs for auto-train speed
             break
             
     predictions = {col: [] for col in cols}
@@ -150,8 +150,8 @@ def predict_hybrid(symbol, forecast_days=30):
         
         residuals = series - arima_fit.fittedvalues
         
-        scaler_path = os.path.join("models", f"hybrid_scaler_{symbol}_{col}.pkl")
-        model_path = os.path.join("models", f"hybrid_lstm_{symbol}_{col}.pth")
+        scaler_path = os.path.join("models", f"arima_lstm_scaler_{symbol}_{col}.pkl")
+        model_path = os.path.join("models", f"arima_lstm_{symbol}_{col}.pth")
         
         with open(scaler_path, 'rb') as f:
             scaler = pickle.load(f)
@@ -204,8 +204,8 @@ def generate_forecast(symbol, model_type="LSTM", forecast_days=30):
     elif model_type == "SARIMAX":
         from train_sarimax import fit_sarimax_forecast
         return fit_sarimax_forecast(symbol, forecast_days=forecast_days)
-    elif model_type == "HYBRID":
-        return predict_hybrid(symbol, forecast_days=forecast_days)
+    elif model_type == "ARIMA-LSTM":
+        return predict_arima_lstm(symbol, forecast_days=forecast_days)
     else:
         raise ValueError(f"Unknown model type: {model_type}")
 

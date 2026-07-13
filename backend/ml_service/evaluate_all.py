@@ -8,6 +8,7 @@ from train_rf import train_rf_model
 from train_xgb import train_xgb_model
 from train_sarima import evaluate_sarima
 from train_sarimax import evaluate_sarimax
+from train_arima_lstm import train_arima_lstm_model
 
 def evaluate_all_models(symbol="RELIANCE"):
     print("=" * 60)
@@ -65,7 +66,15 @@ def evaluate_all_models(symbol="RELIANCE"):
     except Exception as e:
         print(f"CNN-LSTM evaluation failed: {e}")
         
-    print("\n[6/7] Evaluating Statistical Seasonal Baseline: SARIMA")
+    print("\n[6/8] Evaluating Hybrid Deep Learning Model: ARIMA-LSTM")
+    try:
+        _, metrics = train_arima_lstm_model(symbol, epochs=5)
+        metrics['Model'] = 'ARIMA-LSTM'
+        all_metrics.append(metrics)
+    except Exception as e:
+        print(f"ARIMA-LSTM evaluation failed: {e}")
+        
+    print("\n[7/8] Evaluating Statistical Seasonal Baseline: SARIMA")
     try:
         metrics = evaluate_sarima(symbol)
         metrics['Model'] = 'SARIMA'
@@ -73,7 +82,7 @@ def evaluate_all_models(symbol="RELIANCE"):
     except Exception as e:
         print(f"SARIMA evaluation failed: {e}")
 
-    print("\n[7/7] Evaluating Statistical Seasonal Exogenous Baseline: SARIMAX")
+    print("\n[8/8] Evaluating Statistical Seasonal Exogenous Baseline: SARIMAX")
     try:
         metrics = evaluate_sarimax(symbol)
         metrics['Model'] = 'SARIMAX'

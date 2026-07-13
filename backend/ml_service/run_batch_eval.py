@@ -203,6 +203,19 @@ def eval_cnn_lstm(symbol, epochs):
         print(f"FAILED ({e})")
         return {"Model": "CNN-LSTM"}
 
+def eval_arima_lstm(symbol, epochs):
+    print(f"  [ARIMA-LSTM]... ({epochs} epochs)", end=" ", flush=True)
+    try:
+        from train_arima_lstm import train_arima_lstm_model
+        _, m = train_arima_lstm_model(symbol, epochs=epochs)
+        m["Model"] = "ARIMA-LSTM"
+        print("OK")
+        return m
+    except Exception as e:
+        print(f"FAILED ({e})")
+        return {"Model": "ARIMA-LSTM"}
+
+
 
 # ---------------------------------------------------------------------------
 # Per-symbol evaluation
@@ -248,6 +261,7 @@ def evaluate_symbol(symbol, lstm_epochs=20, only_stats=False, only_classic=False
         if not only_classic and not only_trees:
             results.append(eval_lstm(symbol, lstm_epochs))
             results.append(eval_cnn_lstm(symbol, lstm_epochs))
+            results.append(eval_arima_lstm(symbol, lstm_epochs))
 
     print_comparison_table(symbol, results)
 

@@ -293,6 +293,7 @@ export class StocksController {
             time: timestamp,
             category: 'Market',
             sentiment: 0,
+            summary: '',
             url: n.link,
           };
         });
@@ -330,6 +331,7 @@ export class StocksController {
               time: pubDate ? new Date(pubDate).toLocaleString() : 'Recent',
               category: 'Finance',
               sentiment: 0,
+              summary: '',
               url: link,
             });
           }
@@ -349,21 +351,24 @@ export class StocksController {
       try {
         const existingHeadlines = allNews.slice(0, 15).map((n, i) => `${i + 1}. ${n.headline.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/<[^>]*>/g, '').trim()}`).join('\n');
 
-        const combinedPrompt = `You are a financial analyst. You have TWO tasks:
+        const combinedPrompt = `You are a financial analyst. You have THREE tasks:
 
-TASK 1: Generate 5 current, realistic financial news headlines about "${query}" attributed to real outlets (Bloomberg, Reuters, CNBC, FirstPost, CNN, Economic Times).
+TASK 1: Generate 5 current, realistic financial news headlines about "${query}" attributed to real outlets (Bloomberg, Reuters, CNBC, FirstPost, CNN, Economic Times). Include a 1-2 sentence summary for each.
 
 TASK 2: Score the sentiment of ALL headlines (both the ones I provide AND the 5 you generate) from -1.0 (very bearish) to 1.0 (very bullish).
+
+TASK 3: Provide a 1-2 sentence summary for each of the EXISTING HEADLINES based on context.
 
 EXISTING HEADLINES:
 ${existingHeadlines}
 
 Return ONLY this JSON (no markdown, no explanation):
 {
-  "generated": [{"headline": "...", "source": "...", "category": "...", "sentiment": 0.5}],
-  "existingSentiments": [0.5, -0.3, ...]
+  "generated": [{"headline": "...", "source": "...", "category": "...", "sentiment": 0.5, "summary": "..."}],
+  "existingSentiments": [0.5, -0.3, ...],
+  "existingSummaries": ["...", "...", ...]
 }
-"existingSentiments" must have exactly ${allNews.slice(0, 15).length} numbers matching the existing headlines above.`;
+"existingSentiments" and "existingSummaries" must have exactly ${allNews.slice(0, 15).length} items matching the existing headlines above.`;
 
         console.log('[NEWS] Making single combined Gemini call with retry...');
         let rawText = await geminiService.generate(combinedPrompt, 'gemini-2.0-flash');
@@ -373,14 +378,17 @@ Return ONLY this JSON (no markdown, no explanation):
 
         const parsed = JSON.parse(rawText.match(/\{[\s\S]*\}/)?.[0] || '{}');
 
-        // Apply existing sentiments
-        if (Array.isArray(parsed.existingSentiments)) {
+        // Apply existing sentiments and summaries
+        if (Array.isArray(parsed.existingSentiments) || Array.isArray(parsed.existingSummaries)) {
           allNews.forEach((n, i) => {
-            if (i < parsed.existingSentiments.length && typeof parsed.existingSentiments[i] === 'number') {
+            if (parsed.existingSentiments && i < parsed.existingSentiments.length && typeof parsed.existingSentiments[i] === 'number') {
               n.sentiment = parsed.existingSentiments[i];
             }
+            if (parsed.existingSummaries && i < parsed.existingSummaries.length && typeof parsed.existingSummaries[i] === 'string') {
+              n.summary = parsed.existingSummaries[i];
+            }
           });
-          console.log('[NEWS] Applied sentiments to', parsed.existingSentiments.length, 'existing articles');
+          console.log('[NEWS] Applied sentiments and summaries to', parsed.existingSentiments?.length, 'existing articles');
         }
 
         // Add generated news
@@ -392,6 +400,7 @@ Return ONLY this JSON (no markdown, no explanation):
             time: 'Just now',
             category: item.category || 'Market',
             sentiment: typeof item.sentiment === 'number' ? item.sentiment : 0,
+            summary: item.summary || '',
             url: null,
           }));
           console.log('[NEWS] Added', geminiNews.length, 'Gemini-generated headlines');

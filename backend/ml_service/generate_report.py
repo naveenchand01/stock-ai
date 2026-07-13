@@ -49,11 +49,11 @@ os.makedirs(FIG_DIR, exist_ok=True)
 # ---------------------------------------------------------------------------
 # Design constants
 # ---------------------------------------------------------------------------
-MODEL_ORDER  = ["ARIMA", "SARIMA", "Random Forest", "XGBoost", "LSTM", "CNN-LSTM"]
+MODEL_ORDER  = ["ARIMA", "SARIMA", "ARIMA-LSTM", "XGBoost", "LSTM", "CNN-LSTM"]
 MODEL_COLORS = {
     "ARIMA":         "#A8C4E0",
     "SARIMA":        "#6FA8D0",
-    "Random Forest": "#F4A460",
+    "ARIMA-LSTM":    "#F4A460",
     "XGBoost":       "#E07840",
     "LSTM":          "#8CC0A0",
     "CNN-LSTM":      "#2E8B57",
@@ -382,7 +382,7 @@ try:
     model_fills = {
         "ARIMA":         "A8C4E0",
         "SARIMA":        "6FA8D0",
-        "Random Forest": "F4D0A0",
+        "ARIMA-LSTM": "F4D0A0",
         "XGBoost":       "F4A460",
         "LSTM":          "B0D8B0",
         "CNN-LSTM":      "2E8B57",
