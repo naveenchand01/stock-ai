@@ -420,11 +420,11 @@ try:
     for ci in range(1, len(cols) + 1):
         ws1.column_dimensions[get_column_letter(ci)].width = 16
 
-    # --- Sheet 2: CNN-LSTM Summary ---
-    ws2 = wb.create_sheet("CNN-LSTM Summary")
+    # --- Sheet 2: ARIMA-LSTM Summary ---
+    ws2 = wb.create_sheet("ARIMA-LSTM Summary")
     sum_cols = ["Symbol", "RMSE", "MAE", "MAPE", "Accuracy (%)", "R2",
                 "Directional_Accuracy", "Precision", "Recall", "F1_Score"]
-    cnn_df = df_raw[df_raw["Model"] == "CNN-LSTM"][sum_cols].sort_values("R2", ascending=False)
+    cnn_df = df_raw[df_raw["Model"] == "ARIMA-LSTM"][sum_cols].sort_values("R2", ascending=False)
 
     for ci, col in enumerate(sum_cols, 1):
         cell = ws2.cell(row=1, column=ci, value=col)
@@ -547,7 +547,7 @@ avg_df_display = (
 )
 
 cnn_top = (
-    df_raw[df_raw["Model"] == "CNN-LSTM"][[
+    df_raw[df_raw["Model"] == "ARIMA-LSTM"][[
         "Symbol", "RMSE", "MAE", "MAPE", "Accuracy (%)", "R2",
         "Directional_Accuracy", "Precision", "Recall", "F1_Score"
     ]]
@@ -556,30 +556,30 @@ cnn_top = (
 )
 
 # Placeholder → value mapping
-cnn = df_raw[df_raw["Model"] == "CNN-LSTM"]
+cnn = df_raw[df_raw["Model"] == "ARIMA-LSTM"]
 replacements = {
     "{{NUM_SYMBOLS}}":    str(df_raw["Symbol"].nunique()),
-    "{{CNN_AVG_R2}}":     f"{cnn['R2'].mean():.3f}",
-    "{{CNN_AVG_MAPE}}":   f"{cnn['MAPE'].mean():.2f}",
+    "{{AL_AVG_R2}}":      f"{cnn['R2'].mean():.3f}",
+    "{{AL_AVG_MAPE}}":    f"{cnn['MAPE'].mean():.2f}",
     "{{R2_ABOVE_90}}":    str(int((cnn["R2"] > 0.9).sum())),
     "{{R2_ABOVE_0}}":     str(int((cnn["R2"] > 0.0).sum())),
     "{{TABLE_AVERAGES}}": df_to_html(avg_df_display),
-    "{{TABLE_CNN_LSTM}}": df_to_html(cnn_top.reset_index(drop=True),
+    "{{TABLE_AL}}":       df_to_html(cnn_top.reset_index(drop=True),
                                      highlight_col="R2", green_if_high=True),
     "{{FIG_1}}": fig_tag(p1, "Figure 1: Average MAPE by Model — lower is better"),
     "{{FIG_2}}": fig_tag(p2, "Figure 2: Average RMSE and R² by Model"),
     "{{FIG_3}}": fig_tag(p3, "Figure 3: R² Score Heatmap (Green=Good, Red=Poor). "
-                              "Sorted by CNN-LSTM R² descending.", "100%"),
+                              "Sorted by ARIMA-LSTM R² descending.", "100%"),
     "{{FIG_4}}": fig_tag(p4, "Figure 4: MAPE % Heatmap (Green=Low error, Red=High error). "
-                              "Sorted by CNN-LSTM MAPE ascending.", "100%"),
+                              "Sorted by ARIMA-LSTM MAPE ascending.", "100%"),
     "{{FIG_5}}": fig_tag(p5, "Figure 5: Distribution of Forecast Accuracy (100 - MAPE) by Model "
                               "across all 50 stocks."),
     "{{FIG_6}}": fig_tag(p6, "Figure 6: F1-Score Heatmap for BUY/SELL classification. "
                               "Darker blue = better balance between precision and recall.", "100%"),
-    "{{FIG_7}}": fig_tag(p7, "Figure 7: Top 15 Nifty 50 stocks where CNN-LSTM achieves "
+    "{{FIG_7}}": fig_tag(p7, "Figure 7: Top 15 Nifty 50 stocks where ARIMA-LSTM achieves "
                               "best R² (train:13yr / test:2yr)"),
-    "{{FIG_8}}": fig_tag(p8, "Figure 8: CNN-LSTM vs LSTM R² scatter — "
-                              "points above diagonal = CNN-LSTM wins"),
+    "{{FIG_8}}": fig_tag(p8, "Figure 8: ARIMA-LSTM vs LSTM R² scatter — "
+                              "points above diagonal = ARIMA-LSTM wins"),
 }
 
 # Load template and substitute

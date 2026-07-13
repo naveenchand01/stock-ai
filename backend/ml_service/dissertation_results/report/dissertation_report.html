@@ -86,28 +86,28 @@
   <h2>&#127942; Key Findings at a Glance</h2>
   <div class="kpi-row">
     <div class="kpi">
-      <div class="val">0.725</div>
-      <div class="lbl">CNN-LSTM Avg R&sup2;</div>
+      <div class="val">0.974</div>
+      <div class="lbl">ARIMA-LSTM Avg R&sup2;</div>
     </div>
     <div class="kpi">
-      <div class="val">3.79%</div>
-      <div class="lbl">CNN-LSTM Avg MAPE</div>
+      <div class="val">1.14%</div>
+      <div class="lbl">ARIMA-LSTM Avg MAPE</div>
     </div>
     <div class="kpi">
-      <div class="val">12</div>
+      <div class="val">50</div>
       <div class="lbl">Stocks with R&sup2; &gt; 0.90</div>
     </div>
     <div class="kpi">
-      <div class="val">49</div>
+      <div class="val">50</div>
       <div class="lbl">Stocks with R&sup2; &gt; 0</div>
     </div>
     <div class="kpi">
-      <div class="val">CNN-LSTM</div>
+      <div class="val">ARIMA-LSTM</div>
       <div class="lbl">Best Model Overall</div>
     </div>
   </div>
   <div class="note">
-    <strong>Dissertation Note:</strong> CNN-LSTM achieves the lowest MAPE and highest R&sup2; across all 50 Nifty stocks,
+    <strong>Dissertation Note:</strong> ARIMA-LSTM achieves the lowest MAPE and highest R&sup2; across all 50 Nifty stocks,
     confirming that hybrid deep learning architectures outperform classical statistical models (ARIMA, SARIMA)
     and traditional ML models (ARIMA-LSTM, XGBoost) for stock price regression.
     Directional accuracy across all models is near 50% &mdash; consistent with the Efficient Market Hypothesis
@@ -143,7 +143,7 @@
   <div class="note">
     <strong>Key Observation:</strong> This metric flips the error percentage into a clean 0-100% accuracy score.
     Higher values (closer to 100%) indicate that the model's price predictions are tighter and more reliable. 
-    Notice how CNN-LSTM consistently produces the tightest bounds across the Nifty 50.
+    Notice how ARIMA-LSTM consistently produces the tightest bounds across the Nifty 50.
   </div>
 </section>
 
@@ -169,8 +169,8 @@
   <h2>&#127777; R&sup2; Heatmap &mdash; All Stocks &times; All Models</h2>
   
     <figure>
-      <img src="figures/03_r2_heatmap.png" alt="Figure 3: R² Score Heatmap (Green=Good, Red=Poor). Sorted by CNN-LSTM R² descending." style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
-      <figcaption>Figure 3: R² Score Heatmap (Green=Good, Red=Poor). Sorted by CNN-LSTM R² descending.</figcaption>
+      <img src="figures/03_r2_heatmap.png" alt="Figure 3: R² Score Heatmap (Green=Good, Red=Poor). Sorted by ARIMA-LSTM R² descending." style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+      <figcaption>Figure 3: R² Score Heatmap (Green=Good, Red=Poor). Sorted by ARIMA-LSTM R² descending.</figcaption>
     </figure>
 </section>
 
@@ -179,8 +179,8 @@
   <h2>&#127777; MAPE Heatmap &mdash; All Stocks &times; All Models</h2>
   
     <figure>
-      <img src="figures/04_mape_heatmap.png" alt="Figure 4: MAPE % Heatmap (Green=Low error, Red=High error). Sorted by CNN-LSTM MAPE ascending." style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
-      <figcaption>Figure 4: MAPE % Heatmap (Green=Low error, Red=High error). Sorted by CNN-LSTM MAPE ascending.</figcaption>
+      <img src="figures/04_mape_heatmap.png" alt="Figure 4: MAPE % Heatmap (Green=Low error, Red=High error). Sorted by ARIMA-LSTM MAPE ascending." style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+      <figcaption>Figure 4: MAPE % Heatmap (Green=Low error, Red=High error). Sorted by ARIMA-LSTM MAPE ascending.</figcaption>
     </figure>
 </section>
 
@@ -196,74 +196,74 @@
 
 <!-- ===== TOP 15 + SCATTER ===== -->
 <section>
-  <h2>&#127945; Top 15 Stocks by CNN-LSTM R&sup2; Score</h2>
+  <h2>&#127945; Top 15 Stocks by ARIMA-LSTM R&sup2; Score</h2>
   <div class="grid-2">
     
     <figure>
-      <img src="figures/07_best_model_r2_top15.png" alt="Figure 7: Top 15 Nifty 50 stocks where CNN-LSTM achieves best R² (train:13yr / test:2yr)" style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
-      <figcaption>Figure 7: Top 15 Nifty 50 stocks where CNN-LSTM achieves best R² (train:13yr / test:2yr)</figcaption>
+      <img src="figures/07_best_model_r2_top15.png" alt="Figure 7: Top 15 Nifty 50 stocks where ARIMA-LSTM achieves best R² (train:13yr / test:2yr)" style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+      <figcaption>Figure 7: Top 15 Nifty 50 stocks where ARIMA-LSTM achieves best R² (train:13yr / test:2yr)</figcaption>
     </figure>
     
     <figure>
-      <img src="figures/08_cnnlstm_vs_lstm_scatter.png" alt="Figure 8: CNN-LSTM vs LSTM R² scatter — points above diagonal = CNN-LSTM wins" style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
-      <figcaption>Figure 8: CNN-LSTM vs LSTM R² scatter — points above diagonal = CNN-LSTM wins</figcaption>
+      <img src="figures/08_cnnlstm_vs_lstm_scatter.png" alt="Figure 8: ARIMA-LSTM vs LSTM R² scatter — points above diagonal = ARIMA-LSTM wins" style="width:100%;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">
+      <figcaption>Figure 8: ARIMA-LSTM vs LSTM R² scatter — points above diagonal = ARIMA-LSTM wins</figcaption>
     </figure>
   </div>
 </section>
 
-<!-- ===== TABLE 2: CNN-LSTM FULL RESULTS ===== -->
+<!-- ===== TABLE 2: ARIMA-LSTM FULL RESULTS ===== -->
 <section>
-  <h2>&#128203; Table 2 &mdash; CNN-LSTM Full Results: All 50 Stocks (Sorted by R&sup2;)</h2>
-  <table><thead><tr><th>Symbol</th><th>RMSE</th><th>MAE</th><th>MAPE</th><th>Accuracy (%)</th><th>R2</th><th>Directional_Accuracy</th><th>Precision</th><th>Recall</th><th>F1_Score</th></tr></thead><tbody><tr><td >TCS</td><td >93.7357</td><td >72.3232</td><td >2.3375</td><td >97.6625</td><td style="background:#c8efce">0.9743</td><td >47.3573</td><td >0.4441</td><td >0.7381</td><td >0.5546</td></tr>
-<tr><td >ITC</td><td >10.4736</td><td >7.5056</td><td >2.0080</td><td >97.9920</td><td style="background:#c8efce">0.9573</td><td >53.0655</td><td >0.4954</td><td >0.4864</td><td >0.4908</td></tr>
-<tr><td >WIPRO</td><td >6.0728</td><td >4.5734</td><td >1.9455</td><td >98.0545</td><td style="background:#c8efce">0.9570</td><td >49.4715</td><td >0.4926</td><td >0.7137</td><td >0.5829</td></tr>
-<tr><td >TATASTEEL</td><td >5.2964</td><td >4.0139</td><td >2.4619</td><td >97.5381</td><td style="background:#c8efce">0.9546</td><td >49.2600</td><td >0.5081</td><td >0.5123</td><td >0.5102</td></tr>
-<tr><td >INDUSINDBK</td><td >40.8654</td><td >27.7295</td><td >3.1896</td><td >96.8104</td><td style="background:#c8efce">0.9532</td><td >52.2199</td><td >0.5180</td><td >0.6102</td><td >0.5603</td></tr>
-<tr><td >LTM</td><td >161.3460</td><td >126.4788</td><td >2.4627</td><td >97.5373</td><td style="background:#c8efce">0.9512</td><td >50.9554</td><td >0.5248</td><td >0.4398</td><td >0.4786</td></tr>
-<tr><td >TMPV</td><td >47.1562</td><td >32.2792</td><td >5.7555</td><td >94.2445</td><td style="background:#c8efce">0.9511</td><td >48.6258</td><td >0.4694</td><td >0.8402</td><td >0.6023</td></tr>
-<tr><td >HEROMOTOCO</td><td >165.3966</td><td >125.2871</td><td >2.5457</td><td >97.4543</td><td style="background:#c8efce">0.9471</td><td >50.3171</td><td >0.5115</td><td >0.3724</td><td >0.4310</td></tr>
-<tr><td >HDFCLIFE</td><td >16.8316</td><td >13.3532</td><td >1.9233</td><td >98.0767</td><td style="background:#c8efce">0.9449</td><td >52.5926</td><td >0.4836</td><td >0.3138</td><td >0.3806</td></tr>
-<tr><td >INFY</td><td >58.1470</td><td >44.8118</td><td >2.8562</td><td >97.1438</td><td style="background:#c8efce">0.9306</td><td >52.0085</td><td >0.5304</td><td >0.2607</td><td >0.3496</td></tr>
-<tr><td >BRITANNIA</td><td >136.9449</td><td >100.3581</td><td >1.8297</td><td >98.1703</td><td style="background:#c8efce">0.9089</td><td >53.4884</td><td >0.5640</td><td >0.5595</td><td >0.5618</td></tr>
-<tr><td >ADANIENT</td><td >100.3856</td><td >75.2793</td><td >3.0900</td><td >96.9100</td><td style="background:#c8efce">0.9009</td><td >46.7230</td><td >0.4537</td><td >0.6368</td><td >0.5299</td></tr>
-<tr><td >ASIANPAINT</td><td >90.7525</td><td >72.5277</td><td >2.9370</td><td >97.0630</td><td style="background:#e8f5e9">0.8998</td><td >50.7400</td><td >0.5013</td><td >0.8462</td><td >0.6296</td></tr>
-<tr><td >ONGC</td><td >7.2512</td><td >5.4998</td><td >2.2068</td><td >97.7932</td><td style="background:#e8f5e9">0.8985</td><td >54.1226</td><td >0.5385</td><td >0.3668</td><td >0.4364</td></tr>
-<tr><td >AXISBANK</td><td >34.0067</td><td >25.9482</td><td >2.1327</td><td >97.8673</td><td style="background:#e8f5e9">0.8921</td><td >51.7970</td><td >0.5276</td><td >0.2851</td><td >0.3702</td></tr>
-<tr><td >TATACONSUM</td><td >29.7318</td><td >22.7336</td><td >2.1379</td><td >97.8621</td><td style="background:#e8f5e9">0.8782</td><td >55.8140</td><td >0.5486</td><td >0.6026</td><td >0.5743</td></tr>
-<tr><td >CIPLA</td><td >33.2858</td><td >26.1273</td><td >1.7969</td><td >98.2031</td><td style="background:#e8f5e9">0.8775</td><td >48.4144</td><td >0.4952</td><td >0.4256</td><td >0.4578</td></tr>
-<tr><td >HCLTECH</td><td >64.9219</td><td >52.2882</td><td >3.4071</td><td >96.5929</td><td style="background:#e8f5e9">0.8730</td><td >47.5687</td><td >0.4234</td><td >0.2035</td><td >0.2749</td></tr>
-<tr><td >ADANIPORTS</td><td >68.7503</td><td >56.3474</td><td >4.0657</td><td >95.9343</td><td style="background:#e8f5e9">0.8616</td><td >48.2030</td><td >0.4790</td><td >0.7435</td><td >0.5826</td></tr>
-<tr><td >HINDALCO</td><td >57.5723</td><td >39.8599</td><td >4.5925</td><td >95.4075</td><td style="background:#e8f5e9">0.8531</td><td >50.1057</td><td >0.6154</td><td >0.2738</td><td >0.3789</td></tr>
-<tr><td >HINDUNILVR</td><td >69.7066</td><td >55.7897</td><td >2.3058</td><td >97.6942</td><td style="background:#e8f5e9">0.8435</td><td >52.8541</td><td >0.5132</td><td >0.1733</td><td >0.2591</td></tr>
-<tr><td >MARUTI</td><td >725.0996</td><td >536.1033</td><td >3.7659</td><td >96.2341</td><td style="background:#e8f5e9">0.8259</td><td >50.5285</td><td >0.5041</td><td >0.5169</td><td >0.5105</td></tr>
-<tr><td >DRREDDY</td><td >26.8060</td><td >21.0503</td><td >1.6797</td><td >98.3203</td><td style="background:#e8f5e9">0.8216</td><td >51.5856</td><td >0.5272</td><td >0.4059</td><td >0.4586</td></tr>
-<tr><td >HDFCBANK</td><td >34.5244</td><td >28.7525</td><td >3.1601</td><td >96.8399</td><td style="background:#e8f5e9">0.8058</td><td >52.4313</td><td >0.5221</td><td >0.3074</td><td >0.3869</td></tr>
-<tr><td >SBILIFE</td><td >90.1659</td><td >79.6492</td><td >4.3847</td><td >95.6153</td><td style="background:#e8f5e9">0.8055</td><td >50.2427</td><td >0.5000</td><td >0.0146</td><td >0.0284</td></tr>
-<tr><td >KOTAKBANK</td><td >12.9900</td><td >10.6577</td><td >2.6112</td><td >97.3888</td><td style="background:#e8f5e9">0.8015</td><td >53.0655</td><td >0.5926</td><td >0.2025</td><td >0.3019</td></tr>
-<tr><td >TECHM</td><td >47.2109</td><td >38.3846</td><td >2.5468</td><td >97.4532</td><td style="background:#e8f5e9">0.7920</td><td >50.5285</td><td >0.5146</td><td >0.2236</td><td >0.3118</td></tr>
-<tr><td >NESTLEIND</td><td >47.1488</td><td >35.4047</td><td >2.8102</td><td >97.1898</td><td style="background:#e8f5e9">0.7907</td><td >48.6258</td><td >0.4880</td><td >0.3389</td><td >0.4000</td></tr>
-<tr><td >SBIN</td><td >59.3728</td><td >40.3880</td><td >4.1705</td><td >95.8295</td><td style="background:#e8f5e9">0.7835</td><td >49.2600</td><td >0.5333</td><td >0.2267</td><td >0.3182</td></tr>
-<tr><td >GRASIM</td><td >87.0584</td><td >69.8891</td><td >2.6108</td><td >97.3892</td><td style="background:#e8f5e9">0.7694</td><td >50.7400</td><td >0.5041</td><td >0.7754</td><td >0.6110</td></tr>
-<tr><td >COALINDIA</td><td >19.6727</td><td >16.8768</td><td >4.4424</td><td >95.5576</td><td style="background:#e8f5e9">0.7633</td><td >55.3911</td><td >0.5395</td><td >0.8506</td><td >0.6602</td></tr>
-<tr><td >RELIANCE</td><td >48.5468</td><td >38.8203</td><td >2.8866</td><td >97.1134</td><td style="background:#e8f5e9">0.7538</td><td >51.3742</td><td >0.5068</td><td >0.7915</td><td >0.6179</td></tr>
-<tr><td >TITAN</td><td >200.8666</td><td >157.9595</td><td >4.0546</td><td >95.9454</td><td style="background:#e8f5e9">0.7357</td><td >48.6258</td><td >0.4717</td><td >0.1042</td><td >0.1706</td></tr>
-<tr><td >ULTRACEMCO</td><td >320.2495</td><td >250.2662</td><td >2.1596</td><td >97.8404</td><td style="background:#e8f5e9">0.7205</td><td >50.5285</td><td >0.5115</td><td >0.3739</td><td >0.4320</td></tr>
-<tr><td >LT</td><td >151.0429</td><td >117.7514</td><td >3.1624</td><td >96.8376</td><td style="background:#e8f5e9">0.7194</td><td >49.8943</td><td >0.4769</td><td >0.4079</td><td >0.4397</td></tr>
-<tr><td >NTPC</td><td >17.1126</td><td >14.8291</td><td >4.3248</td><td >95.6752</td><td style="background:#fff8e1">0.6815</td><td >53.6998</td><td >0.5285</td><td >0.7046</td><td >0.6040</td></tr>
-<tr><td >BPCL</td><td >20.6124</td><td >15.9742</td><td >4.9007</td><td >95.0993</td><td style="background:#fff8e1">0.6625</td><td >53.9112</td><td >0.5714</td><td >0.1416</td><td >0.2270</td></tr>
-<tr><td >SUNPHARMA</td><td >48.3634</td><td >38.0968</td><td >2.1681</td><td >97.8319</td><td style="background:#fff8e1">0.6521</td><td >50.9514</td><td >0.5893</td><td >0.2619</td><td >0.3626</td></tr>
-<tr><td >APOLLOHOSP</td><td >323.0114</td><td >255.7491</td><td >3.3879</td><td >96.6121</td><td style="background:#fff8e1">0.6354</td><td >51.3742</td><td >0.5238</td><td >0.1416</td><td >0.2230</td></tr>
-<tr><td >BAJAJ-AUTO</td><td >617.5640</td><td >475.4049</td><td >5.2498</td><td >94.7502</td><td style="background:#fff8e1">0.6054</td><td >50.7400</td><td >0.5183</td><td >0.6393</td><td >0.5725</td></tr>
-<tr><td >SHRIRAMFIN</td><td >110.1390</td><td >75.5357</td><td >8.5554</td><td >91.4446</td><td style="background:#fff8e1">0.5809</td><td >51.5856</td><td >0.5844</td><td >0.1860</td><td >0.2821</td></tr>
-<tr><td >M&M</td><td >205.0387</td><td >163.6477</td><td >4.9995</td><td >95.0005</td><td style="background:#fff8e1">0.5706</td><td >52.0085</td><td >0.5728</td><td >0.2438</td><td >0.3420</td></tr>
-<tr><td >BAJAJFINSV</td><td >100.6795</td><td >84.7074</td><td >4.3436</td><td >95.6564</td><td style="background:#fff8e1">0.5680</td><td >50.7400</td><td >0.5270</td><td >0.1646</td><td >0.2508</td></tr>
-<tr><td >EICHERMOT</td><td >787.3495</td><td >603.4223</td><td >8.8760</td><td >91.1240</td><td style="background:#fff8e1">0.4656</td><td >49.2600</td><td >0.5000</td><td >0.0458</td><td >0.0840</td></tr>
-<tr><td >BAJFINANCE</td><td >85.3720</td><td >70.7793</td><td >7.5679</td><td >92.4321</td><td style="background:#fff8e1">0.4593</td><td >48.8372</td><td >0.5781</td><td >0.1468</td><td >0.2342</td></tr>
-<tr><td >JSWSTEEL</td><td >88.7216</td><td >76.4573</td><td >6.8068</td><td >93.1932</td><td style="background:#fff8e1">0.4291</td><td >47.1459</td><td >0.4615</td><td >0.0241</td><td >0.0458</td></tr>
-<tr><td >POWERGRID</td><td >14.8611</td><td >13.2320</td><td >4.7029</td><td >95.2971</td><td style="background:#fff8e1">0.4209</td><td >49.8943</td><td >0.4966</td><td >0.9359</td><td >0.6489</td></tr>
-<tr><td >ICICIBANK</td><td >70.8971</td><td >61.5725</td><td >4.5078</td><td >95.4922</td><td style="background:#fff8e1">0.1836</td><td >50.7400</td><td >0.7500</td><td >0.0498</td><td >0.0934</td></tr>
-<tr><td >DIVISLAB</td><td >426.5868</td><td >374.6763</td><td >5.9379</td><td >94.0621</td><td style="background:#fff8e1">0.1804</td><td >49.0486</td><td >0.6471</td><td >0.0447</td><td >0.0837</td></tr>
-<tr><td >BHARTIARTL</td><td >243.5228</td><td >208.2696</td><td >10.8948</td><td >89.1052</td><td style="background:#ffebee">-0.9275</td><td >47.9915</td><td >0.5000</td><td >0.0325</td><td >0.0611</td></tr>
+  <h2>&#128203; Table 2 &mdash; ARIMA-LSTM Full Results: All 50 Stocks (Sorted by R&sup2;)</h2>
+  <table><thead><tr><th>Symbol</th><th>RMSE</th><th>MAE</th><th>MAPE</th><th>Accuracy (%)</th><th>R2</th><th>Directional_Accuracy</th><th>Precision</th><th>Recall</th><th>F1_Score</th></tr></thead><tbody><tr><td >TMPV</td><td >17.6343</td><td >9.5032</td><td >1.5902</td><td >98.4098</td><td style="background:#c8efce">0.9940</td><td >45.7490</td><td >0.4559</td><td >0.9602</td><td >0.6182</td></tr>
+<tr><td >TCS</td><td >47.1907</td><td >32.4841</td><td >1.0297</td><td >98.9703</td><td style="background:#c8efce">0.9937</td><td >55.0607</td><td >0.0000</td><td >0.0000</td><td >0.0000</td></tr>
+<tr><td >ITC</td><td >4.4523</td><td >3.0734</td><td >0.8184</td><td >99.1816</td><td style="background:#c8efce">0.9923</td><td >54.0486</td><td >0.6000</td><td >0.0391</td><td >0.0735</td></tr>
+<tr><td >EICHERMOT</td><td >101.6614</td><td >70.3026</td><td >1.1654</td><td >98.8346</td><td style="background:#c8efce">0.9912</td><td >50.0000</td><td >0.5714</td><td >0.0161</td><td >0.0314</td></tr>
+<tr><td >HINDALCO</td><td >14.3780</td><td >10.3798</td><td >1.3492</td><td >98.6508</td><td style="background:#c8efce">0.9907</td><td >54.6559</td><td >0.5504</td><td >0.9296</td><td >0.6915</td></tr>
+<tr><td >SHRIRAMFIN</td><td >17.2348</td><td >12.1314</td><td >1.6620</td><td >98.3380</td><td style="background:#c8efce">0.9898</td><td >50.4049</td><td >0.5090</td><td >0.7857</td><td >0.6178</td></tr>
+<tr><td >SBIN</td><td >12.7136</td><td >8.7629</td><td >1.0076</td><td >98.9924</td><td style="background:#c8efce">0.9897</td><td >51.2146</td><td >0.5126</td><td >0.9684</td><td >0.6703</td></tr>
+<tr><td >INDUSINDBK</td><td >22.3796</td><td >13.2825</td><td >1.4713</td><td >98.5287</td><td style="background:#c8efce">0.9885</td><td >48.7854</td><td >0.4898</td><td >0.9918</td><td >0.6558</td></tr>
+<tr><td >MARUTI</td><td >188.8798</td><td >135.2834</td><td >1.0233</td><td >98.9767</td><td style="background:#c8efce">0.9878</td><td >51.6194</td><td >0.6471</td><td >0.0451</td><td >0.0843</td></tr>
+<tr><td >HEROMOTOCO</td><td >78.4929</td><td >59.2656</td><td >1.2414</td><td >98.7586</td><td style="background:#c8efce">0.9876</td><td >55.0607</td><td >0.5461</td><td >0.6426</td><td >0.5904</td></tr>
+<tr><td >SBILIFE</td><td >23.3457</td><td >17.1383</td><td >0.9863</td><td >99.0137</td><td style="background:#c8efce">0.9865</td><td >50.2315</td><td >0.4845</td><td >0.2217</td><td >0.3042</td></tr>
+<tr><td >TATASTEEL</td><td >2.8438</td><td >2.0466</td><td >1.2722</td><td >98.7278</td><td style="background:#c8efce">0.9864</td><td >53.2389</td><td >0.5331</td><td >0.6414</td><td >0.5823</td></tr>
+<tr><td >INFY</td><td >25.6630</td><td >18.4288</td><td >1.2383</td><td >98.7617</td><td style="background:#c8efce">0.9863</td><td >46.5587</td><td >0.4586</td><td >0.5041</td><td >0.4803</td></tr>
+<tr><td >ASIANPAINT</td><td >35.7489</td><td >25.7072</td><td >1.0216</td><td >98.9784</td><td style="background:#c8efce">0.9852</td><td >51.8219</td><td >1.0000</td><td >0.0206</td><td >0.0403</td></tr>
+<tr><td >BHARTIARTL</td><td >23.2492</td><td >17.2364</td><td >0.9638</td><td >99.0362</td><td style="background:#c8efce">0.9846</td><td >51.2146</td><td >0.5130</td><td >0.8611</td><td >0.6430</td></tr>
+<tr><td >BAJFINANCE</td><td >15.1184</td><td >10.9335</td><td >1.2685</td><td >98.7315</td><td style="background:#c8efce">0.9843</td><td >48.3806</td><td >0.0000</td><td >0.0000</td><td >0.0000</td></tr>
+<tr><td >HDFCBANK</td><td >10.4175</td><td >7.7411</td><td >0.9043</td><td >99.0957</td><td style="background:#c8efce">0.9826</td><td >51.8219</td><td >0.5143</td><td >0.0753</td><td >0.1314</td></tr>
+<tr><td >JSWSTEEL</td><td >16.4069</td><td >11.9738</td><td >1.1346</td><td >98.8654</td><td style="background:#c8efce">0.9814</td><td >51.0121</td><td >0.5192</td><td >0.6378</td><td >0.5724</td></tr>
+<tr><td >HDFCLIFE</td><td >9.8278</td><td >7.6279</td><td >1.1190</td><td >98.8810</td><td style="background:#c8efce">0.9804</td><td >45.5399</td><td >0.4554</td><td >1.0000</td><td >0.6258</td></tr>
+<tr><td >LTM</td><td >100.6076</td><td >72.4442</td><td >1.4308</td><td >98.5692</td><td style="background:#c8efce">0.9803</td><td >50.2033</td><td >0.5011</td><td >0.9146</td><td >0.6475</td></tr>
+<tr><td >HCLTECH</td><td >25.0713</td><td >17.1767</td><td >1.1522</td><td >98.8478</td><td style="background:#c8efce">0.9803</td><td >47.7733</td><td >0.4635</td><td >0.5336</td><td >0.4961</td></tr>
+<tr><td >TITAN</td><td >54.5999</td><td >38.4763</td><td >1.0452</td><td >98.9548</td><td style="background:#c8efce">0.9803</td><td >51.4170</td><td >0.5105</td><td >0.6883</td><td >0.5862</td></tr>
+<tr><td >ADANIPORTS</td><td >26.2286</td><td >19.1449</td><td >1.3974</td><td >98.6026</td><td style="background:#c8efce">0.9793</td><td >46.1538</td><td >0.4699</td><td >0.9536</td><td >0.6295</td></tr>
+<tr><td >WIPRO</td><td >4.2772</td><td >3.0455</td><td >1.2610</td><td >98.7390</td><td style="background:#c8efce">0.9779</td><td >51.2146</td><td >0.4857</td><td >0.0708</td><td >0.1236</td></tr>
+<tr><td >NESTLEIND</td><td >15.1073</td><td >10.9683</td><td >0.9019</td><td >99.0981</td><td style="background:#c8efce">0.9777</td><td >49.1903</td><td >0.4906</td><td >0.6367</td><td >0.5542</td></tr>
+<tr><td >COALINDIA</td><td >6.1831</td><td >4.4508</td><td >1.1012</td><td >98.8988</td><td style="background:#c8efce">0.9772</td><td >51.0121</td><td >0.5101</td><td >1.0000</td><td >0.6756</td></tr>
+<tr><td >BAJAJ-AUTO</td><td >151.6420</td><td >105.8179</td><td >1.1703</td><td >98.8297</td><td style="background:#c8efce">0.9752</td><td >51.0121</td><td >0.5120</td><td >0.9249</td><td >0.6592</td></tr>
+<tr><td >BPCL</td><td >5.5735</td><td >4.1427</td><td >1.3725</td><td >98.6275</td><td style="background:#c8efce">0.9746</td><td >47.9757</td><td >0.4783</td><td >0.9788</td><td >0.6426</td></tr>
+<tr><td >BRITANNIA</td><td >71.2376</td><td >52.1747</td><td >0.9447</td><td >99.0553</td><td style="background:#c8efce">0.9744</td><td >52.8340</td><td >0.5283</td><td >1.0000</td><td >0.6914</td></tr>
+<tr><td >NTPC</td><td >4.9786</td><td >3.7878</td><td >1.0757</td><td >98.9243</td><td style="background:#c8efce">0.9733</td><td >49.7976</td><td >0.4706</td><td >0.2667</td><td >0.3404</td></tr>
+<tr><td >HINDUNILVR</td><td >29.7503</td><td >21.8678</td><td >0.9267</td><td >99.0733</td><td style="background:#c8efce">0.9725</td><td >48.5830</td><td >0.4787</td><td >0.9615</td><td >0.6392</td></tr>
+<tr><td >AXISBANK</td><td >17.4161</td><td >12.3129</td><td >1.0319</td><td >98.9681</td><td style="background:#c8efce">0.9711</td><td >53.4413</td><td >0.5266</td><td >0.4125</td><td >0.4626</td></tr>
+<tr><td >APOLLOHOSP</td><td >93.0487</td><td >66.6239</td><td >0.9260</td><td >99.0740</td><td style="background:#c8efce">0.9710</td><td >51.0121</td><td >0.5000</td><td >0.7355</td><td >0.5953</td></tr>
+<tr><td >M&M</td><td >54.9985</td><td >42.3928</td><td >1.3882</td><td >98.6118</td><td style="background:#c8efce">0.9698</td><td >51.4170</td><td >0.5197</td><td >0.5777</td><td >0.5472</td></tr>
+<tr><td >DIVISLAB</td><td >95.3067</td><td >68.5162</td><td >1.1395</td><td >98.8605</td><td style="background:#c8efce">0.9693</td><td >45.6389</td><td >0.4608</td><td >0.3984</td><td >0.4274</td></tr>
+<tr><td >BAJAJFINSV</td><td >28.8329</td><td >21.5165</td><td >1.1564</td><td >98.8436</td><td style="background:#c8efce">0.9678</td><td >50.8097</td><td >0.5714</td><td >0.0327</td><td >0.0618</td></tr>
+<tr><td >ONGC</td><td >4.3480</td><td >3.1116</td><td >1.2428</td><td >98.7572</td><td style="background:#c8efce">0.9678</td><td >45.5466</td><td >0.4659</td><td >0.8577</td><td >0.6038</td></tr>
+<tr><td >RELIANCE</td><td >17.8948</td><td >13.3063</td><td >0.9741</td><td >99.0259</td><td style="background:#c8efce">0.9676</td><td >49.5951</td><td >0.4928</td><td >0.9876</td><td >0.6575</td></tr>
+<tr><td >ADANIENT</td><td >62.2551</td><td >41.9635</td><td >1.7180</td><td >98.2820</td><td style="background:#c8efce">0.9655</td><td >46.5587</td><td >0.4619</td><td >0.8658</td><td >0.6024</td></tr>
+<tr><td >KOTAKBANK</td><td >5.5064</td><td >3.9313</td><td >0.9984</td><td >99.0016</td><td style="background:#c8efce">0.9653</td><td >47.7733</td><td >0.4813</td><td >0.9667</td><td >0.6427</td></tr>
+<tr><td >TATACONSUM</td><td >15.9316</td><td >11.6284</td><td >1.0718</td><td >98.9282</td><td style="background:#c8efce">0.9651</td><td >53.8462</td><td >0.6000</td><td >0.1736</td><td >0.2692</td></tr>
+<tr><td >ICICIBANK</td><td >15.3081</td><td >11.3317</td><td >0.8598</td><td >99.1402</td><td style="background:#c8efce">0.9651</td><td >51.6194</td><td >0.5090</td><td >0.6898</td><td >0.5858</td></tr>
+<tr><td >LT</td><td >56.7748</td><td >39.3751</td><td >1.0852</td><td >98.9148</td><td style="background:#c8efce">0.9589</td><td >48.3806</td><td >0.4573</td><td >0.3824</td><td >0.4165</td></tr>
+<tr><td >POWERGRID</td><td >4.1778</td><td >3.0856</td><td >1.0621</td><td >98.9379</td><td style="background:#c8efce">0.9577</td><td >48.5830</td><td >0.4774</td><td >0.5685</td><td >0.5189</td></tr>
+<tr><td >GRASIM</td><td >38.1726</td><td >28.0103</td><td >1.0385</td><td >98.9615</td><td style="background:#c8efce">0.9542</td><td >46.1538</td><td >0.4561</td><td >0.5394</td><td >0.4943</td></tr>
+<tr><td >CIPLA</td><td >20.3680</td><td >14.2689</td><td >0.9830</td><td >99.0170</td><td style="background:#c8efce">0.9526</td><td >50.8097</td><td >0.5073</td><td >0.9760</td><td >0.6676</td></tr>
+<tr><td >TECHM</td><td >25.2575</td><td >19.0788</td><td >1.2980</td><td >98.7020</td><td style="background:#c8efce">0.9394</td><td >48.7854</td><td >0.4895</td><td >0.9588</td><td >0.6481</td></tr>
+<tr><td >SUNPHARMA</td><td >21.5330</td><td >15.6806</td><td >0.9135</td><td >99.0865</td><td style="background:#c8efce">0.9337</td><td >52.8340</td><td >0.5294</td><td >0.9962</td><td >0.6914</td></tr>
+<tr><td >DRREDDY</td><td >17.2262</td><td >12.6092</td><td >0.9995</td><td >99.0005</td><td style="background:#c8efce">0.9297</td><td >48.5830</td><td >0.4826</td><td >0.3347</td><td >0.3952</td></tr>
+<tr><td >ULTRACEMCO</td><td >164.1219</td><td >121.7957</td><td >1.0550</td><td >98.9450</td><td style="background:#c8efce">0.9240</td><td >48.1781</td><td >0.4872</td><td >0.9385</td><td >0.6415</td></tr>
 </tbody></table>
 </section>
 

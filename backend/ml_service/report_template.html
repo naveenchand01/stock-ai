@@ -86,12 +86,12 @@
   <h2>&#127942; Key Findings at a Glance</h2>
   <div class="kpi-row">
     <div class="kpi">
-      <div class="val">{{CNN_AVG_R2}}</div>
-      <div class="lbl">CNN-LSTM Avg R&sup2;</div>
+      <div class="val">{{AL_AVG_R2}}</div>
+      <div class="lbl">ARIMA-LSTM Avg R&sup2;</div>
     </div>
     <div class="kpi">
-      <div class="val">{{CNN_AVG_MAPE}}%</div>
-      <div class="lbl">CNN-LSTM Avg MAPE</div>
+      <div class="val">{{AL_AVG_MAPE}}%</div>
+      <div class="lbl">ARIMA-LSTM Avg MAPE</div>
     </div>
     <div class="kpi">
       <div class="val">{{R2_ABOVE_90}}</div>
@@ -102,12 +102,12 @@
       <div class="lbl">Stocks with R&sup2; &gt; 0</div>
     </div>
     <div class="kpi">
-      <div class="val">CNN-LSTM</div>
+      <div class="val">ARIMA-LSTM</div>
       <div class="lbl">Best Model Overall</div>
     </div>
   </div>
   <div class="note">
-    <strong>Dissertation Note:</strong> CNN-LSTM achieves the lowest MAPE and highest R&sup2; across all 50 Nifty stocks,
+    <strong>Dissertation Note:</strong> ARIMA-LSTM achieves the lowest MAPE and highest R&sup2; across all 50 Nifty stocks,
     confirming that hybrid deep learning architectures outperform classical statistical models (ARIMA, SARIMA)
     and traditional ML models (ARIMA-LSTM, XGBoost) for stock price regression.
     Directional accuracy across all models is near 50% &mdash; consistent with the Efficient Market Hypothesis
@@ -133,7 +133,7 @@
   <div class="note">
     <strong>Key Observation:</strong> This metric flips the error percentage into a clean 0-100% accuracy score.
     Higher values (closer to 100%) indicate that the model's price predictions are tighter and more reliable. 
-    Notice how CNN-LSTM consistently produces the tightest bounds across the Nifty 50.
+    Notice how ARIMA-LSTM consistently produces the tightest bounds across the Nifty 50.
   </div>
 </section>
 
@@ -166,17 +166,17 @@
 
 <!-- ===== TOP 15 + SCATTER ===== -->
 <section>
-  <h2>&#127945; Top 15 Stocks by CNN-LSTM R&sup2; Score</h2>
+  <h2>&#127945; Top 15 Stocks by ARIMA-LSTM R&sup2; Score</h2>
   <div class="grid-2">
     {{FIG_7}}
     {{FIG_8}}
   </div>
 </section>
 
-<!-- ===== TABLE 2: CNN-LSTM FULL RESULTS ===== -->
+<!-- ===== TABLE 2: ARIMA-LSTM FULL RESULTS ===== -->
 <section>
-  <h2>&#128203; Table 2 &mdash; CNN-LSTM Full Results: All 50 Stocks (Sorted by R&sup2;)</h2>
-  {{TABLE_CNN_LSTM}}
+  <h2>&#128203; Table 2 &mdash; ARIMA-LSTM Full Results: All 50 Stocks (Sorted by R&sup2;)</h2>
+  {{TABLE_AL}}
 </section>
 
 </main>
