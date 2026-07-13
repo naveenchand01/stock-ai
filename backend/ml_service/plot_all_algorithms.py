@@ -46,7 +46,7 @@ split_idx = int(len(dates) * train_split)
 train_dates = dates[:split_idx]
 test_dates = dates[split_idx:]
 
-PLOT_LAST_N_DAYS = 150
+PLOT_LAST_N_DAYS = len(test_dates)  # Plot the entire test set (~2 years)
 plot_dates = test_dates[-PLOT_LAST_N_DAYS:]
 plot_y_test_scaled = y_test_scaled[-PLOT_LAST_N_DAYS:]
 
