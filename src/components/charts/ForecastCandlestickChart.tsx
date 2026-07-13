@@ -54,6 +54,7 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
 
     const seenTimes = new Set();
     const candleData = [];
+    const tzOffset = new Date().getTimezoneOffset() * 60; // Offset in seconds
 
     for (const item of historicalData) {
       // lightweight-charts requires numbers, skip if data is missing or null (e.g. market holidays)
@@ -61,7 +62,7 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
         continue;
       }
       
-      const time = Math.floor(new Date(item.date).getTime() / 1000);
+      const time = Math.floor(new Date(item.date).getTime() / 1000) - tzOffset;
       if (!seenTimes.has(time)) {
         seenTimes.add(time);
         candleData.push({
@@ -93,7 +94,7 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
         continue;
       }
 
-      const time = Math.floor(new Date(item.date).getTime() / 1000);
+      const time = Math.floor(new Date(item.date).getTime() / 1000) - tzOffset;
       if (!seenVolumeTimes.has(time)) {
         seenVolumeTimes.add(time);
         volumeData.push({
@@ -130,7 +131,7 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
       }
 
       for (const item of predictionData) {
-        const time = Math.floor(item.time / 1000);
+        const time = Math.floor(item.time / 1000) - tzOffset;
         if (!seenLineTimes.has(time)) {
           seenLineTimes.add(time);
           lineData.push({

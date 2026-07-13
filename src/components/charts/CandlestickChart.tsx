@@ -62,9 +62,10 @@ export const CandlestickChart = ({ data, height = 400 }: CandlestickChartProps) 
     // Transform data for lightweight-charts
     const seenTimes = new Set();
     const chartData = [];
+    const tzOffset = new Date().getTimezoneOffset() * 60; // Offset in seconds
 
     for (const item of data) {
-      const time = Math.floor(new Date(item.date).getTime() / 1000);
+      const time = Math.floor(new Date(item.date).getTime() / 1000) - tzOffset;
       if (!seenTimes.has(time)) {
         seenTimes.add(time);
         chartData.push({
@@ -92,7 +93,7 @@ export const CandlestickChart = ({ data, height = 400 }: CandlestickChartProps) 
     const seenVolumeTimes = new Set();
 
     for (const item of data) {
-      const time = Math.floor(new Date(item.date).getTime() / 1000);
+      const time = Math.floor(new Date(item.date).getTime() / 1000) - tzOffset;
       if (!seenVolumeTimes.has(time)) {
         seenVolumeTimes.add(time);
         volumeData.push({
