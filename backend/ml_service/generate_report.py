@@ -580,6 +580,14 @@ replacements = {
                               "best R² (train:13yr / test:2yr)"),
     "{{FIG_8}}": fig_tag(p8, "Figure 8: ARIMA-LSTM vs LSTM R² scatter — "
                               "points above diagonal = ARIMA-LSTM wins"),
+    
+    # Individual Stock Plots
+    "{{PLOT_ARIMA}}": fig_tag(os.path.join("graphs", "arima_plot.png"), "ARIMA (5,1,0) - Rolling Forecast"),
+    "{{PLOT_SARIMA}}": fig_tag(os.path.join("graphs", "sarima_plot.png"), "SARIMA (1,1,1)(0,0,0,0) - Rolling Forecast"),
+    "{{PLOT_XGB}}": fig_tag(os.path.join("graphs", "xgb_plot.png"), "XGBoost - Tree Based Ensemble"),
+    "{{PLOT_LSTM}}": fig_tag(os.path.join("graphs", "lstm_plot.png"), "LSTM - Deep Learning (50 Epochs)"),
+    "{{PLOT_CNNLSTM}}": fig_tag(os.path.join("graphs", "cnnlstm_plot.png"), "CNN-LSTM - Spatio-Temporal Extraction"),
+    "{{PLOT_ARIMALSTM}}": fig_tag(os.path.join("graphs", "arima_lstm_plot.png"), "ARIMA-LSTM - Hybrid Champion Model"),
 }
 
 # Load template and substitute
