@@ -499,12 +499,21 @@ print("\nGenerating HTML report …")
 
 TEMPLATE_PATH = "report_template.html"
 
+import base64
+
 def fig_tag(path, caption, width="100%"):
-    """Return an HTML <figure> tag with a relative img path."""
-    rel = os.path.relpath(path, REPORT_DIR).replace("\\", "/")
+    """Return an HTML <figure> tag with a base64-encoded image."""
+    try:
+        with open(path, "rb") as img_file:
+            b64_string = base64.b64encode(img_file.read()).decode('utf-8')
+        src = f"data:image/png;base64,{b64_string}"
+    except Exception as e:
+        print(f"Error loading image {path}: {e}")
+        src = ""
+        
     return (
         f'\n    <figure>\n'
-        f'      <img src="{rel}" alt="{caption}" '
+        f'      <img src="{src}" alt="{caption}" '
         f'style="width:{width};border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.12);">\n'
         f'      <figcaption>{caption}</figcaption>\n'
         f'    </figure>'
