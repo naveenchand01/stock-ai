@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 from preprocess import load_stock_data, prepare_lstm_data, add_technical_indicators
 from train_lstm import StockLSTM
 from train_cnn_lstm import CNN_LSTM
+from train_arima_lstm import ResidualLSTM
 from statsmodels.tsa.arima.model import ARIMA
 from statsmodels.tsa.statespace.sarimax import SARIMAX
 
@@ -154,5 +155,55 @@ try:
     plot_graph("SARIMA", sarima_preds, "sarima_plot.png")
 except Exception as e:
     print("SARIMA error:", e)
+
+try:
+    print("Running ARIMA-LSTM forecast...")
+    # Base ARIMA for hybrid model is (1,1,0) based on fallback logic in train_arima_lstm
+    al_history = train_data + test_data[:-PLOT_LAST_N_DAYS]
+    
+    # Load scaler
+    with open(f"models/arima_lstm_scaler_{symbol}_Close.pkl", 'rb') as f:
+        res_scaler = pickle.load(f)
+        
+    # Load ResidualLSTM
+    res_lstm = ResidualLSTM(input_size=1, hidden_size=50, num_layers=1, output_size=1).to(device)
+    res_lstm.load_state_dict(torch.load(f"models/arima_lstm_{symbol}_Close.pth", map_location=device))
+    res_lstm.eval()
+    
+    al_preds = []
+    # We need the previous day's residual. 
+    # To get the previous day's residual (t-1), we quickly fit ARIMA for t-1.
+    tmp_model = ARIMA(al_history[:-1], order=(1,1,0))
+    tmp_fit = tmp_model.fit()
+    prev_yhat = tmp_fit.forecast()[0]
+    prev_residual = al_history[-1] - prev_yhat
+    
+    for t in range(PLOT_LAST_N_DAYS):
+        # 1. Base ARIMA prediction
+        model_a = ARIMA(al_history, order=(1,1,0))
+        model_a_fit = model_a.fit()
+        base_yhat = model_a_fit.forecast()[0]
+        
+        # 2. LSTM Residual prediction
+        prev_res_scaled = res_scaler.transform(np.array([[prev_residual]]))[0][0]
+        # input shape: (1, 1, 1) -> batch, seq, feature
+        res_input = torch.FloatTensor([[[prev_res_scaled]]]).to(device)
+        with torch.no_grad():
+            pred_res_scaled = res_lstm(res_input).cpu().numpy()[0][0]
+            
+        pred_res = res_scaler.inverse_transform(np.array([[pred_res_scaled]]))[0][0]
+        
+        # 3. Final prediction
+        final_yhat = base_yhat + pred_res
+        al_preds.append(final_yhat)
+        
+        # Update history and true residual for next step
+        actual_val = test_data[-PLOT_LAST_N_DAYS + t]
+        prev_residual = actual_val - base_yhat
+        al_history.append(actual_val)
+        
+    plot_graph("ARIMA-LSTM", al_preds, "arima_lstm_plot.png")
+except Exception as e:
+    print("ARIMA-LSTM error:", e)
 
 print("Done generating all graphs.")
