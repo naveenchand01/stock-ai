@@ -45,10 +45,10 @@ def fit_sarima_forecast(symbol, forecast_days=30):
     return forecast_result
 
 def evaluate_sarima(symbol):
-    df = load_stock_data(symbol, last_n_years=7)
+    df = load_stock_data(symbol, last_n_years=5)
     
-    # 5-year train / 2-year test chronological split out of 7 years total
-    split_idx = int(len(df) * (5/7))
+    # 80% train / 20% test chronological split
+    split_idx = int(len(df) * 0.8)
     train_data = df['Close'].values[:split_idx]
     test_data = df['Close'].values[split_idx:]
     
