@@ -49,14 +49,14 @@ os.makedirs(FIG_DIR, exist_ok=True)
 # ---------------------------------------------------------------------------
 # Design constants
 # ---------------------------------------------------------------------------
-MODEL_ORDER  = ["ARIMA", "SARIMA", "ARIMA-LSTM", "XGBoost", "LSTM", "CNN-LSTM"]
+MODEL_ORDER  = ["ARIMA", "SARIMA", "XGBoost", "LSTM", "CNN-LSTM", "ARIMA-LSTM"]
 MODEL_COLORS = {
     "ARIMA":         "#A8C4E0",
     "SARIMA":        "#6FA8D0",
-    "ARIMA-LSTM":    "#F4A460",
     "XGBoost":       "#E07840",
     "LSTM":          "#8CC0A0",
-    "CNN-LSTM":      "#2E8B57",
+    "CNN-LSTM":      "#32CD32",
+    "ARIMA-LSTM":    "#2E8B57",
 }
 FONT_TITLE  = {"fontsize": 13, "fontweight": "bold", "color": "#1a1a2e"}
 FONT_AXIS   = {"fontsize": 10, "color": "#333333"}
@@ -173,7 +173,7 @@ print("[3/8] R² heatmap …")
 data_r2 = pv_r2[MODEL_ORDER].copy()
 # Clip for color clarity: R² in [-3, 1]
 data_clipped = data_r2.clip(-3, 1)
-symbols_sorted = data_r2["CNN-LSTM"].sort_values(ascending=False).index
+symbols_sorted = data_r2["ARIMA-LSTM"].sort_values(ascending=False).index
 
 cmap_r2 = LinearSegmentedColormap.from_list("r2cmap", ["#d73027", "#fee08b", "#1a9850"])
 
@@ -208,7 +208,7 @@ print(f"  Saved: {p3}")
 # ---------------------------------------------------------------------------
 print("[4/8] MAPE heatmap …")
 data_mape = pv_mape[MODEL_ORDER].copy()
-symbols_mape = data_mape["CNN-LSTM"].sort_values().index   # sort by CNN-LSTM MAPE ascending
+symbols_mape = data_mape["ARIMA-LSTM"].sort_values().index   # sort by ARIMA-LSTM MAPE ascending
 cmap_mape = LinearSegmentedColormap.from_list("mapecmap", ["#1a9850", "#fee08b", "#d73027"])
 
 fig, ax = plt.subplots(figsize=(12, max(8, len(symbols_mape) * 0.3)))
@@ -268,7 +268,7 @@ print(f"  Saved: {p5}")
 # ---------------------------------------------------------------------------
 print("[6/8] F1-Score heatmap …")
 data_f1 = pv_f1[MODEL_ORDER].copy()
-symbols_f1 = data_f1["CNN-LSTM"].sort_values(ascending=False).index
+symbols_f1 = data_f1["ARIMA-LSTM"].sort_values(ascending=False).index
 cmap_f1 = LinearSegmentedColormap.from_list("f1cmap", ["#f7fbff", "#4393c3", "#053061"])
 
 fig, ax = plt.subplots(figsize=(12, max(8, len(symbols_f1) * 0.3)))
