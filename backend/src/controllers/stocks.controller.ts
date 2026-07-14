@@ -1,5 +1,6 @@
 import { Request, Response } from 'express';
 import { stocksService } from '../services/stocks.service';
+import { yahooFinanceApi } from '../services/yahooFinance.service';
 import { geminiService } from '../services/gemini.service';
 import logger from '../utils/logger';
 
@@ -279,77 +280,90 @@ export class StocksController {
       const { symbolParam } = req.query;
       const query = symbolParam ? (symbolParam as string) : 'stock market';
 
-      // ====== SOURCE 1: Yahoo Finance (via search) ======
-      let yahooNews: any[] = [];
-      try {
-        const results: any = await stocksService.search(query);
-        yahooNews = (results.news || []).slice(0, 8).map((n: any) => {
-          let timestamp = "Just now";
-          try { timestamp = new Date(n.providerPublishTime * 1000).toLocaleString(); } catch (e) { }
-          return {
-            id: n.uuid || `yahoo-${Math.random().toString(36).slice(2)}`,
-            headline: n.title,
-            source: n.publisher || 'Yahoo Finance',
-            time: timestamp,
-            category: 'Market',
-            sentiment: 0,
-            summary: '',
-            url: n.link,
-          };
-        });
-      } catch (e) {
-        logger.error('Failed to fetch Yahoo Finance news:', e);
-      }
+      // ====== SOURCES 1 & 2: Fetch Yahoo Finance news + Google News RSS in PARALLEL ======
+      const withTimeout = <T>(promise: Promise<T>, ms: number, label: string): Promise<T> =>
+        Promise.race([
+          promise,
+          new Promise<T>((_, reject) => setTimeout(() => reject(new Error(`${label} timed out after ${ms}ms`)), ms)),
+        ]);
 
-      // ====== SOURCE 2: Google News RSS (aggregates Bloomberg, CNN, FirstPost, Reuters, CNBC, etc.) ======
-      let googleNews: any[] = [];
-      try {
-        const googleRssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query + ' finance')}&hl=en-IN&gl=IN&ceid=IN:en`;
-        const rssResponse = await fetch(googleRssUrl, {
-          headers: {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-          }
-        });
-        const rssText = await rssResponse.text();
-
-        // Parse RSS XML manually (lightweight, no extra dependencies)
-        const items: any[] = [];
-        const itemRegex = /<item>([\s\S]*?)<\/item>/g;
-        let match;
-        while ((match = itemRegex.exec(rssText)) !== null && items.length < 12) {
-          const itemXml = match[1];
-          const title = itemXml.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.replace(/<!\[CDATA\[|\]\]>/g, '').trim() || '';
-          const link = itemXml.match(/<link>([\s\S]*?)<\/link>/)?.[1]?.trim() || '';
-          const pubDate = itemXml.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || '';
-          const sourceMatch = itemXml.match(/<source[^>]*>([\s\S]*?)<\/source>/)?.[1]?.replace(/<!\[CDATA\[|\]\]>/g, '').trim() || '';
-
-          if (title) {
-            items.push({
-              id: `google-${Math.random().toString(36).slice(2)}`,
-              headline: title,
-              source: sourceMatch || 'Google News',
-              time: pubDate ? new Date(pubDate).toLocaleString() : 'Recent',
-              category: 'Finance',
+      // Yahoo Finance news (uses searchStocks directly — avoids NIFTY-50 stock filter in stocksService.search)
+      const yahooNewsPromise = withTimeout(
+        yahooFinanceApi.searchStocks(query).then((results: any) =>
+          (results?.news || []).slice(0, 8).map((n: any) => {
+            let timestamp = 'Just now';
+            try { timestamp = new Date(n.providerPublishTime * 1000).toLocaleString(); } catch (e) { }
+            return {
+              id: n.uuid || `yahoo-${Math.random().toString(36).slice(2)}`,
+              headline: n.title,
+              source: n.publisher || 'Yahoo Finance',
+              time: timestamp,
+              category: 'Market',
               sentiment: 0,
               summary: '',
-              url: link,
-            });
+              url: n.link,
+            };
+          })
+        ),
+        12000,
+        'Yahoo Finance news'
+      );
+
+      // Google News RSS
+      const googleNewsPromise = withTimeout(
+        (async () => {
+          const googleRssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(query + ' finance')}&hl=en-IN&gl=IN&ceid=IN:en`;
+          const rssResponse = await fetch(googleRssUrl, {
+            headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36' },
+          });
+          const rssText = await rssResponse.text();
+          const items: any[] = [];
+          const itemRegex = /<item>([\s\S]*?)<\/item>/g;
+          let match;
+          while ((match = itemRegex.exec(rssText)) !== null && items.length < 12) {
+            const itemXml = match[1];
+            const title = itemXml.match(/<title>([\s\S]*?)<\/title>/)?.[1]?.replace(/<!\[CDATA\[|\]\]>/g, '').trim() || '';
+            const link = itemXml.match(/<link>([\s\S]*?)<\/link>/)?.[1]?.trim() || '';
+            const pubDate = itemXml.match(/<pubDate>([\s\S]*?)<\/pubDate>/)?.[1]?.trim() || '';
+            const sourceMatch = itemXml.match(/<source[^>]*>([\s\S]*?)<\/source>/)?.[1]?.replace(/<!\[CDATA\[|\]\]>/g, '').trim() || '';
+            if (title) {
+              items.push({
+                id: `google-${Math.random().toString(36).slice(2)}`,
+                headline: title,
+                source: sourceMatch || 'Google News',
+                time: pubDate ? new Date(pubDate).toLocaleString() : 'Recent',
+                category: 'Finance',
+                sentiment: 0,
+                summary: '',
+                url: link,
+              });
+            }
           }
-        }
-        googleNews = items;
-      } catch (e) {
-        logger.error('Failed to fetch Google News RSS:', e);
-      }
+          return items;
+        })(),
+        12000,
+        'Google News RSS'
+      );
 
-      // ====== SOURCE 3: Gemini AI - combined news generation + sentiment for all headlines ======
-      // We do ONE Gemini call that both generates extra headlines AND scores all sentiments
-      let geminiNews: any[] = [];
+      // Run both in parallel
+      const [yahooResult, googleResult] = await Promise.allSettled([yahooNewsPromise, googleNewsPromise]);
+      const yahooNews: any[] = yahooResult.status === 'fulfilled' ? yahooResult.value : [];
+      const googleNews: any[] = googleResult.status === 'fulfilled' ? googleResult.value : [];
 
-      // First merge Google + Yahoo
+      if (yahooResult.status === 'rejected') logger.error('Yahoo Finance news failed:', yahooResult.reason);
+      if (googleResult.status === 'rejected') logger.error('Google News RSS failed:', googleResult.reason);
+
+      // Merge Google + Yahoo before sending to Gemini
       const allNews = [...googleNews, ...yahooNews];
 
+      // ====== SOURCE 3: Gemini AI — sentiment scoring + generated headlines (with 45s timeout guard) ======
+      let geminiNews: any[] = [];
+
       try {
-        const existingHeadlines = allNews.slice(0, 15).map((n, i) => `${i + 1}. ${n.headline.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/<[^>]*>/g, '').trim()}`).join('\n');
+        const existingHeadlines = allNews
+          .slice(0, 15)
+          .map((n, i) => `${i + 1}. ${n.headline.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/<[^>]*>/g, '').trim()}`)
+          .join('\n');
 
         const combinedPrompt = `You are a financial analyst. You have THREE tasks:
 
@@ -370,15 +384,17 @@ Return ONLY this JSON (no markdown, no explanation):
 }
 "existingSentiments" and "existingSummaries" must have exactly ${allNews.slice(0, 15).length} items matching the existing headlines above.`;
 
-        console.log('[NEWS] Making single combined Gemini call with retry...');
-        let rawText = await geminiService.generate(combinedPrompt, 'gemini-2.0-flash');
+        console.log('[NEWS] Making combined Gemini call (45s timeout)...');
+        let rawText = await withTimeout(
+          geminiService.generate(combinedPrompt, 'gemini-2.0-flash'),
+          45000,
+          'Gemini news analysis'
+        );
         rawText = rawText.replace(/```json\s*/gi, '').replace(/```\s*/g, '').trim();
-
-        console.log('[NEWS] Gemini combined response:', rawText.substring(0, 300));
+        console.log('[NEWS] Gemini response:', rawText.substring(0, 300));
 
         const parsed = JSON.parse(rawText.match(/\{[\s\S]*\}/)?.[0] || '{}');
 
-        // Apply existing sentiments and summaries
         if (Array.isArray(parsed.existingSentiments) || Array.isArray(parsed.existingSummaries)) {
           allNews.forEach((n, i) => {
             if (parsed.existingSentiments && i < parsed.existingSentiments.length && typeof parsed.existingSentiments[i] === 'number') {
@@ -388,10 +404,9 @@ Return ONLY this JSON (no markdown, no explanation):
               n.summary = parsed.existingSummaries[i];
             }
           });
-          console.log('[NEWS] Applied sentiments and summaries to', parsed.existingSentiments?.length, 'existing articles');
+          console.log('[NEWS] Sentiments applied to', parsed.existingSentiments?.length, 'articles');
         }
 
-        // Add generated news
         if (Array.isArray(parsed.generated)) {
           geminiNews = parsed.generated.map((item: any) => ({
             id: `gemini-${Math.random().toString(36).slice(2)}`,
@@ -406,13 +421,12 @@ Return ONLY this JSON (no markdown, no explanation):
           console.log('[NEWS] Added', geminiNews.length, 'Gemini-generated headlines');
         }
       } catch (e: any) {
-        console.error('[NEWS] Combined Gemini call failed, using keyword fallback:', e.message);
-        logger.error('Failed combined Gemini news+sentiment:', e);
+        console.error('[NEWS] Gemini call failed/timed out, applying keyword fallback:', e.message);
+        logger.error('Gemini news+sentiment failed:', e);
 
         // ====== FALLBACK: Keyword-based sentiment scoring ======
         const bullishWords = ['surge', 'soar', 'jump', 'rally', 'gain', 'rise', 'high', 'record', 'profit', 'growth', 'bullish', 'upgrade', 'beat', 'strong', 'boom', 'buy', 'up', 'positive', 'recover', 'advance', 'outperform'];
         const bearishWords = ['crash', 'drop', 'fall', 'decline', 'loss', 'low', 'sell', 'bear', 'downgrade', 'miss', 'weak', 'slump', 'fear', 'risk', 'warning', 'cut', 'down', 'negative', 'plunge', 'slide', 'tumble', 'concern'];
-
         allNews.forEach(n => {
           const headline = n.headline.toLowerCase();
           let score = 0;
@@ -420,12 +434,11 @@ Return ONLY this JSON (no markdown, no explanation):
           bearishWords.forEach(w => { if (headline.includes(w)) score -= 0.25; });
           n.sentiment = Math.max(-1, Math.min(1, score));
         });
-        console.log('[NEWS] Applied keyword-based sentiment to', allNews.length, 'articles');
+        console.log('[NEWS] Keyword sentiment applied to', allNews.length, 'articles');
       }
 
-      // Final merge
       const finalNews = [...allNews, ...geminiNews];
-
+      console.log(`[NEWS] Returning ${finalNews.length} articles for query: "${query}"`);
       return res.json({ data: finalNews });
     } catch (error: any) {
       logger.error('Error in getNews:', error);

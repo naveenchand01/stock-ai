@@ -11,6 +11,7 @@ export const rateLimiter = rateLimit({
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip rate limiting for health check
-  skip: (req) => req.path === '/api/health',
+  // Skip rate limiting for health check and the news endpoint
+  // (news makes multiple slow external calls and would eat rate limit budget)
+  skip: (req) => req.path === '/api/health' || req.path.startsWith('/api/stocks/news'),
 });
