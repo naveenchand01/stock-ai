@@ -208,10 +208,10 @@ This project was built as a **Final Year Dissertation** exploring:
 ## 👤 Author
 
 **Naveen Chand**  
-Final Year Project — BSc Computer Science  
+B.Tech - Computer Science & Engineering 
 📧 naveenchand01042002@gmail.com  
 🔗 [github.com/naveenchand01](https://github.com/naveenchand01)
 
 ---
 
-*Built with ❤️ as a Final Year Dissertation Project*
+Built with ❤️ as a Final Year Dissertation Project
