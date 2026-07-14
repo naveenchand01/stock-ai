@@ -56,7 +56,12 @@ export function Header() {
       if (!user?.uid) return;
       try {
         const alerts = await getUserAlerts(user.uid);
-        const activeAlerts = alerts.filter((a: AlertRule) => a.active).slice(0, 6);
+        const allActive = alerts.filter((a: AlertRule) => a.active);
+        
+        // Deduplicate by exact rule in case of duplicate database records
+        const uniqueActive = Array.from(new Map(allActive.map(a => [`${a.symbol}-${a.type}-${a.threshold}`, a])).values());
+        const activeAlerts = uniqueActive.slice(0, 6);
+        
         if (activeAlerts.length === 0) return;
 
         const symbols = [...new Set(activeAlerts.map((a: AlertRule) => a.symbol))];

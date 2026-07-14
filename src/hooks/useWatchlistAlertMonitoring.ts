@@ -103,7 +103,10 @@ export function useWatchlistAlertMonitoring() {
         const batchAlerts: any[] = [];
         const todayStr = new Date().toDateString();
 
-        alertConfigs.forEach((config) => {
+        // Deduplicate configs by symbol to prevent multiple identical alerts
+        const uniqueConfigs = Array.from(new Map(alertConfigs.map(c => [c.symbol, c])).values());
+
+        uniqueConfigs.forEach((config) => {
             const stock = watchlistStocks.find((s) => s.symbol === config.symbol);
             if (!stock) return;
 
@@ -111,7 +114,7 @@ export function useWatchlistAlertMonitoring() {
                 if (condition) {
                     const triggerKey = `${stock.symbol}-${type}-${config.priceThreshold}-${config.volumeThresholdMultiplier}`;
                     const now = Date.now();
-                    const testModeCooldown = now - 60000; // 1 Minute cooldown for UI
+                    const testModeCooldown = now - (24 * 60 * 60 * 1000); // 24 Hour cooldown for the exact same alert trigger
                     const lastTime = newLastAlerted[triggerKey] ? new Date(newLastAlerted[triggerKey]).getTime() : 0;
 
                     if (lastTime < testModeCooldown) {
