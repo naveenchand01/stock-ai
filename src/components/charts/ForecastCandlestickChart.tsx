@@ -6,12 +6,34 @@ interface ForecastCandlestickChartProps {
   historicalData: HistoricalData[];
   predictionData: { time: number; prediction: number }[];
   height?: number;
+  livePrice?: number;
 }
 
-export const ForecastCandlestickChart = ({ historicalData, predictionData, height = 400 }: ForecastCandlestickChartProps) => {
+export const ForecastCandlestickChart = ({ historicalData, predictionData, height = 400, livePrice }: ForecastCandlestickChartProps) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
+  const seriesRef = useRef<any>(null);
+  const lastCandleRef = useRef<any>(null);
+
+  // Live Price Ticking Effect
+  useEffect(() => {
+    if (!seriesRef.current || !lastCandleRef.current || !livePrice || livePrice === 0) return;
+
+    const candle = { ...lastCandleRef.current };
+    
+    // Dynamically update the current candle in real-time
+    candle.close = livePrice;
+    if (livePrice > candle.high) candle.high = livePrice;
+    if (livePrice < candle.low) candle.low = livePrice;
+    
+    seriesRef.current.update(candle);
+    
+    // We don't overwrite lastCandleRef.current entirely so we preserve its original open time/price
+    lastCandleRef.current.close = candle.close;
+    lastCandleRef.current.high = candle.high;
+    lastCandleRef.current.low = candle.low;
+  }, [livePrice]);
 
   useEffect(() => {
     if (!chartContainerRef.current || !historicalData || historicalData.length === 0) return;
@@ -79,6 +101,11 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
     // Sort ascending by time
     candleData.sort((a, b) => a.time - b.time);
     candlestickSeries.setData(candleData);
+    
+    seriesRef.current = candlestickSeries;
+    if (candleData.length > 0) {
+      lastCandleRef.current = { ...candleData[candleData.length - 1] };
+    }
 
     // Add volume series
     const volumeSeries = chart.addSeries(HistogramSeries, {
@@ -121,9 +148,10 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
       const lineData = [];
       const seenLineTimes = new Set();
       
-      // Determine a step size for interpolation: 1 day (86400s) for daily+ intervals, 1 min (60s) for intraday
-      const lastTimeDiff = candleData.length > 1 ? candleData[candleData.length - 1].time - candleData[candleData.length - 2].time : 60;
-      const stepSize = lastTimeDiff > 0 ? lastTimeDiff : 60;
+      // Determine a step size for interpolation: 1 day (86400s) for daily+, true interval for intraday.
+      // We MUST use the first two candles to determine the interval. The last candle is a live snapshot and might only be 1 min away from the previous.
+      const trueTimeDiff = candleData.length > 2 ? candleData[1].time - candleData[0].time : 60;
+      const stepSize = trueTimeDiff > 0 ? trueTimeDiff : 60;
 
       const lastHistorical = candleData[candleData.length - 1];
       let prevPoint = lastHistorical ? { time: lastHistorical.time, value: lastHistorical.close } : null;

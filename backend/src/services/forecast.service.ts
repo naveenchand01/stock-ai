@@ -145,8 +145,20 @@ class ForecastService {
       const intervals = [];
       // Generate 10 consecutive predictions for the selected interval
       for (let i = 1; i <= 10; i++) {
+        let displayLabel = `${i * tradingMinutes} Min`;
+        if (intervalStr.endsWith('h')) {
+          const hrs = i * parseInt(intervalStr);
+          displayLabel = hrs === 1 ? '1 Hour' : `${hrs} Hours`;
+        } else if (intervalStr === '1d') {
+          displayLabel = i === 1 ? '1 Day' : `${i} Days`;
+        } else if (intervalStr === '1wk') {
+          displayLabel = i === 1 ? '1 Week' : `${i} Weeks`;
+        } else if (intervalStr === '1mo') {
+          displayLabel = i === 1 ? '1 Month' : `${i} Months`;
+        }
+
         intervals.push({
-          label: `${i * tradingMinutes} Min`,
+          label: displayLabel,
           tradingMinutes: i * tradingMinutes,
           calendarMinutes: i * calendarMinutes
         });
@@ -165,37 +177,37 @@ class ForecastService {
         
         // LSTM: Emphasizes momentum and non-linear volume scaling
         const lstmChange = (drift * T) + (momentum * volatility * Math.sqrt(T) * (volumeRatio * 1.2));
-        const lstmPrice = lastDay.close * (1 + lstmChange);
+        const lstmPrice = currentRealPrice * (1 + lstmChange);
 
         // ARIMA: Emphasizes mean-reversion (dampened momentum) and drift
         const arimaChange = (drift * T * 1.5) + (momentum * volatility * Math.sqrt(T) * 0.5);
-        const arimaPrice = lastDay.close * (1 + arimaChange);
+        const arimaPrice = currentRealPrice * (1 + arimaChange);
 
         // SARIMA: Incorporates a slight seasonal oscillation (sine wave approximation over T)
         const sarimaChange = (drift * T * 1.2) + (momentum * volatility * Math.sqrt(T) * 0.6) + (Math.sin(T * Math.PI) * volatility * 0.1);
-        const sarimaPrice = lastDay.close * (1 + sarimaChange);
+        const sarimaPrice = currentRealPrice * (1 + sarimaChange);
 
         // SARIMAX: SARIMA + exogenous volume shock factor
         const exogenousShock = (volumeRatio > 1.5) ? volatility * 0.2 * Math.sign(momentum) : 0;
         const sarimaxChange = sarimaChange + exogenousShock;
-        const sarimaxPrice = lastDay.close * (1 + sarimaxChange);
+        const sarimaxPrice = currentRealPrice * (1 + sarimaxChange);
 
         // HYBRID: Blends LSTM momentum with ARIMA mean reversion
         const hybridChange = (lstmChange * 0.6) + (arimaChange * 0.4);
-        const hybridPrice = lastDay.close * (1 + hybridChange);
+        const hybridPrice = currentRealPrice * (1 + hybridChange);
 
         // Random Forest (RF): High variance/noise sensitivity
         const rfNoise = (Math.random() - 0.5) * volatility * 0.15;
         const rfChange = (drift * T) + (momentum * volatility * Math.sqrt(T)) + rfNoise;
-        const rfPrice = lastDay.close * (1 + rfChange);
+        const rfPrice = currentRealPrice * (1 + rfChange);
 
         // XGBoost: Aggressive trend following, low noise
         const xgboostChange = (drift * T * 0.8) + (momentum * volatility * Math.sqrt(T) * 1.4);
-        const xgboostPrice = lastDay.close * (1 + xgboostChange);
+        const xgboostPrice = currentRealPrice * (1 + xgboostChange);
 
         // CNN-LSTM: Complex deep learning blend (LSTM + short-term feature extraction)
         const cnnlstmChange = (drift * T) + (momentum * volatility * Math.sqrt(T) * 1.3) + (Math.cos(T * Math.PI) * volatility * 0.05);
-        const cnnlstmPrice = lastDay.close * (1 + cnnlstmChange);
+        const cnnlstmPrice = currentRealPrice * (1 + cnnlstmChange);
 
         return {
           interval: interval.label.toLowerCase().replace(' ', ''),

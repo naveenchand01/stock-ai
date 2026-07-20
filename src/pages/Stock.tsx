@@ -133,7 +133,8 @@ const Forecast = () => {
     customDateRange?.end
   );
 
-  const { data: stockQuote } = useStockQuote(selectedSymbol);
+  const { data: stockQuote, isLoading: isQuoteLoading } = useStockQuote(selectedSymbol);
+  const currentPrice = stockQuote?.regularMarketPrice || stockQuote?.price || 0;
 
   // Multi-timeframe intraday data via useHistoricalData (reactive, cached)
   const {
@@ -313,18 +314,43 @@ const Forecast = () => {
   const comparisonPredictionData = useMemo(() => {
     if (!comparisonData || !comparisonData.predictions || intradayCompareData.length === 0) return [];
 
-    // Base timestamp is the very last available intraday candle's time
-    const lastIntradayTime = new Date(intradayCompareData[intradayCompareData.length - 1].date).getTime();
+    // To maintain perfect visual intervals, we must anchor to the last GRID-ALIGNED candle.
+    // Yahoo Finance appends a live snapshot at the end which can be off-grid.
+    let baseCandleTime = new Date(intradayCompareData[intradayCompareData.length - 1].date).getTime();
+    
+    if (intradayCompareData.length >= 3) {
+      const t1 = new Date(intradayCompareData[0].date).getTime();
+      const t2 = new Date(intradayCompareData[1].date).getTime();
+      const trueIntervalMs = t2 - t1;
+
+      const last = new Date(intradayCompareData[intradayCompareData.length - 1].date).getTime();
+      const secondLast = new Date(intradayCompareData[intradayCompareData.length - 2].date).getTime();
+      
+      // If the gap between the last two candles is NOT the true interval (with 1-min tolerance), it is an off-grid live snapshot.
+      if (Math.abs((last - secondLast) - trueIntervalMs) > 60000) {
+        baseCandleTime = secondLast;
+      }
+    }
+
+    const lastIntradayTime = baseCandleTime;
+
+    // The backend generated predictions at a specific past price. 
+    // Shift them dynamically so the blue line moves up and down with the live ticker!
+    const livePrice = currentPrice || comparisonData.currentRealPrice;
+    const backendBase = comparisonData.currentRealPrice || livePrice;
+    const priceShift = livePrice - backendBase;
 
     return comparisonData.predictions.map((p: any) => {
       // p.minutes is e.g. 5, 10, 30, 60...
       const futureTime = lastIntradayTime + (p.minutes * 60 * 1000);
+      const basePrediction = selectedModel === "ARIMA" ? p.arimaPrice : p.lstmPrice;
+      
       return {
         time: futureTime,
-        prediction: selectedModel === "ARIMA" ? p.arimaPrice : p.lstmPrice,
+        prediction: basePrediction + priceShift,
       };
     });
-  }, [comparisonData, intradayCompareData]);
+  }, [comparisonData, intradayCompareData, currentPrice, selectedModel]);
 
   return (
     <DashboardLayout>
@@ -555,7 +581,11 @@ const Forecast = () => {
                     <div>
                       <p className="text-xs text-muted-foreground uppercase font-medium">Real-Time Yahoo Price</p>
                       <h4 className="text-xl font-bold mt-1 text-primary animate-pulse-glow">
-                        ₹{comparisonData.currentRealPrice.toFixed(2)}
+                        {isQuoteLoading && !stockQuote ? (
+                          <span className="animate-pulse">Fetching...</span>
+                        ) : (
+                          <>₹{currentPrice.toFixed(2)}</>
+                        )}
                       </h4>
                       <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
                         <CheckCircle2 className="h-3 w-3 text-success" /> Live via API
@@ -1023,6 +1053,7 @@ const Forecast = () => {
                 historicalData={intradayData}
                 predictionData={[]}
                 height={500}
+                livePrice={currentPrice}
               />
             ) : (
               <div className="h-[500px] flex flex-col items-center justify-center text-muted-foreground gap-2">
