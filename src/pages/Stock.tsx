@@ -49,7 +49,6 @@ const timeframeGroups = [
   {
     label: 'MINUTES',
     options: [
-      { label: '1 second', interval: '1s', period: '1d' },
       { label: '1 minute', interval: '1m', period: '1d' },
       { label: '2 minutes', interval: '2m', period: '1d' },
       { label: '3 minutes', interval: '3m', period: '5d' },
@@ -121,11 +120,9 @@ const Forecast = () => {
 
   const models = ["LSTM", "ARIMA"];
 
+  // Custom Accuracy Calculator State
   const [calcActual, setCalcActual] = useState('');
   const [calcPredicted, setCalcPredicted] = useState('');
-  
-  // Real-time 1-second simulated chart state
-  const [live1sData, setLive1sData] = useState<any[]>([]);
 
   // Fetch standard historical data
   const { data: historicalData = [], isLoading: isHistoryLoading } = useHistoricalData(
@@ -167,82 +164,6 @@ const Forecast = () => {
     }
     return data;
   }, [rawIntradayData]);
-
-  // Generate mock 1s historical candles once to bootstrap the chart
-  useEffect(() => {
-    if (selectedTimeframe.interval !== '1s') {
-      setLive1sData([]);
-      return;
-    }
-
-    if (live1sData.length === 0 && currentPrice > 0) {
-      const bootstrapData = [];
-      let lastPrice = currentPrice;
-      const now = Date.now();
-      
-      for (let i = 100; i >= 0; i--) {
-        const time = now - (i * 1000);
-        // Random walk
-        const change = (Math.random() - 0.5) * (lastPrice * 0.0005);
-        const open = lastPrice;
-        const close = lastPrice + change;
-        const high = Math.max(open, close) + Math.random() * (lastPrice * 0.0002);
-        const low = Math.min(open, close) - Math.random() * (lastPrice * 0.0002);
-        
-        bootstrapData.push({
-          date: new Date(time) as any,
-          open,
-          high,
-          low,
-          close,
-          volume: Math.floor(Math.random() * 5000)
-        });
-        lastPrice = close;
-      }
-      setLive1sData(bootstrapData);
-    }
-  }, [selectedTimeframe.interval, currentPrice, live1sData.length]);
-
-  // Tick the 1s data in real-time
-  useEffect(() => {
-    if (selectedTimeframe.interval !== '1s' || currentPrice === 0 || live1sData.length === 0) return;
-
-    const intervalId = setInterval(() => {
-      setLive1sData(prev => {
-        if (prev.length === 0) return prev;
-        const next = [...prev];
-        const lastCandle = next[next.length - 1];
-        const newTime = new Date();
-        
-        // Add a new candle every second
-        const open = lastCandle.close;
-        const close = currentPrice;
-        const high = Math.max(open, close) + Math.random() * (close * 0.0001);
-        const low = Math.min(open, close) - Math.random() * (close * 0.0001);
-
-        next.push({
-          date: newTime as any,
-          open,
-          high,
-          low,
-          close,
-          volume: Math.floor(Math.random() * 2000)
-        });
-
-        // Limit size to 200 candles to keep performance fast
-        if (next.length > 200) {
-          next.shift();
-        }
-        return next;
-      });
-    }, 1000);
-
-    return () => clearInterval(intervalId);
-  }, [selectedTimeframe.interval, currentPrice, live1sData.length]);
-
-  // Determine active dataset and loading states for Live Intraday Chart
-  const activeIntradayData = selectedTimeframe.interval === '1s' ? live1sData : intradayData;
-  const isChartLoading = selectedTimeframe.interval === '1s' ? live1sData.length === 0 : isIntradayLoading;
 
   // Fetch actual predictions from our Python ML backend (falls back gracefully if offline)
   const { data: forecastData, isLoading: isForecastLoading } = useStockForecast(
@@ -1158,17 +1079,17 @@ const Forecast = () => {
             )}
 
             {/* Chart */}
-            {isChartLoading ? (
+            {isIntradayLoading ? (
               <div className="h-[500px] flex flex-col items-center justify-center">
                 <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
                 <span className="text-muted-foreground text-sm">Loading {isCustomTf ? 'custom' : selectedTimeframe.label} data...</span>
               </div>
-            ) : activeIntradayData.length > 0 ? (
+            ) : intradayData.length > 0 ? (
               <ForecastCandlestickChart
-                historicalData={activeIntradayData}
+                historicalData={intradayData}
                 predictionData={[]}
                 height={500}
-                livePrice={selectedTimeframe.interval === '1s' ? undefined : currentPrice}
+                livePrice={currentPrice}
                 hideTooltip={true}
               />
             ) : (

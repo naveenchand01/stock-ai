@@ -80,11 +80,10 @@ export const useMarketIndices = (): UseQueryResult<MarketIndex[], Error> => {
  * Helper to convert interval strings like '1m', '2h', '1d' into milliseconds
  */
 const getIntervalMs = (intervalStr: string): number => {
-  const match = intervalStr.match(/^(\d+)([ms hd])$/);
+  const match = intervalStr.match(/^(\d+)([mhd])$/);
   if (!match) return 60000; // default 1 minute
   const val = parseInt(match[1]);
   const unit = match[2];
-  if (unit === 's') return val * 1000; // seconds
   if (unit === 'm') return val * 60 * 1000;
   if (unit === 'h') return val * 60 * 60 * 1000;
   if (unit === 'd') return val * 24 * 60 * 60 * 1000;
@@ -106,7 +105,7 @@ export const useHistoricalData = (
     queryFn: () => stocksApi.getHistoricalData(symbol, period, interval, startDate, endDate),
     staleTime: 60000, // 1 minute
     refetchInterval: getIntervalMs(interval),
-    enabled: !!symbol && interval !== '1s', // Disable YF API call for 1s simulation
+    enabled: !!symbol,
   });
 };
 
