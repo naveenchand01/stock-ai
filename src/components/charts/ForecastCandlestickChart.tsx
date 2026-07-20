@@ -10,6 +10,7 @@ interface ForecastCandlestickChartProps {
 
 export const ForecastCandlestickChart = ({ historicalData, predictionData, height = 400 }: ForecastCandlestickChartProps) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
 
   useEffect(() => {
@@ -32,7 +33,7 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
         vertLines: { color: 'rgba(42, 46, 57, 0.1)' },
         horzLines: { color: 'rgba(42, 46, 57, 0.1)' },
       },
-      crosshair: { mode: CrosshairMode.Normal },
+      crosshair: { mode: CrosshairMode.Magnet },
       rightPriceScale: { borderColor: 'rgba(197, 203, 206, 0.4)' },
       timeScale: {
         borderColor: 'rgba(197, 203, 206, 0.4)',
@@ -120,18 +121,39 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
       const lineData = [];
       const seenLineTimes = new Set();
       
-      // Connect to the last historical candle
+      // Determine a step size for interpolation: 1 day (86400s) for daily+ intervals, 1 min (60s) for intraday
+      const lastTimeDiff = candleData.length > 1 ? candleData[candleData.length - 1].time - candleData[candleData.length - 2].time : 60;
+      const stepSize = lastTimeDiff > 0 ? lastTimeDiff : 60;
+
       const lastHistorical = candleData[candleData.length - 1];
-      if (lastHistorical) {
-        lineData.push({
-          time: lastHistorical.time as any,
-          value: lastHistorical.close,
-        });
-        seenLineTimes.add(lastHistorical.time);
+      let prevPoint = lastHistorical ? { time: lastHistorical.time, value: lastHistorical.close } : null;
+
+      if (prevPoint) {
+        lineData.push({ time: prevPoint.time as any, value: prevPoint.value });
+        seenLineTimes.add(prevPoint.time);
       }
 
       for (const item of predictionData) {
         const time = Math.floor(item.time / 1000) - tzOffset;
+        
+        // Interpolate points between prevPoint and current time to make the crosshair glide smoothly
+        if (prevPoint && time > prevPoint.time + stepSize) {
+          const timeGap = time - prevPoint.time;
+          const valueGap = item.prediction - prevPoint.value;
+          
+          for (let t = prevPoint.time + stepSize; t < time; t += stepSize) {
+            if (!seenLineTimes.has(t)) {
+              seenLineTimes.add(t);
+              const progress = (t - prevPoint.time) / timeGap;
+              const interpolatedValue = prevPoint.value + (valueGap * progress);
+              lineData.push({
+                time: t as any,
+                value: interpolatedValue
+              });
+            }
+          }
+        }
+
         if (!seenLineTimes.has(time)) {
           seenLineTimes.add(time);
           lineData.push({
@@ -139,6 +161,8 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
             value: item.prediction,
           });
         }
+        
+        prevPoint = { time, value: item.prediction };
       }
 
       lineData.sort((a, b) => a.time - b.time);
@@ -153,6 +177,66 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
     });
 
     chart.timeScale().fitContent();
+
+    // Setup Crosshair Tooltip
+    chart.subscribeCrosshairMove((param) => {
+      const tooltip = tooltipRef.current;
+      if (!tooltip || !chartContainerRef.current) return;
+
+      if (
+        param.point === undefined ||
+        !param.time ||
+        param.point.x < 0 ||
+        param.point.x > chartContainerRef.current.clientWidth ||
+        param.point.y < 0 ||
+        param.point.y > chartContainerRef.current.clientHeight
+      ) {
+        tooltip.style.display = 'none';
+        return;
+      }
+
+      const dateStr = new Date((Number(param.time) + tzOffset) * 1000).toLocaleString(undefined, {
+        month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      });
+
+      let html = `<div style="font-weight:bold; margin-bottom:4px; color:#E5E7EB;">${dateStr}</div>`;
+
+      const candleInfo: any = param.seriesData.get(candlestickSeries);
+      if (candleInfo && candleInfo.close !== undefined) {
+        const color = candleInfo.close >= candleInfo.open ? '#10B981' : '#EF4444';
+        html += `<div style="color:${color}; font-size:13px;">
+          O: ${candleInfo.open.toFixed(2)} &nbsp;
+          H: ${candleInfo.high.toFixed(2)} <br/>
+          L: ${candleInfo.low.toFixed(2)} &nbsp;
+          C: ${candleInfo.close.toFixed(2)}
+        </div>`;
+      }
+
+      // Check if prediction line exists here
+      if (predictionData && predictionData.length > 0) {
+        const predInfo: any = param.seriesData.get(lineSeries);
+        if (predInfo && predInfo.value !== undefined) {
+          html += `<div style="color:#3b82f6; font-size:13px; font-weight:bold; margin-top:4px;">
+            ML Prediction: ₹${predInfo.value.toFixed(2)}
+          </div>`;
+        }
+      }
+
+      tooltip.innerHTML = html;
+      tooltip.style.display = 'block';
+
+      // Position tooltip avoiding edges
+      const tooltipWidth = 180;
+      const tooltipHeight = 90;
+      const yOffset = param.point.y - tooltipHeight - 10 > 0 ? param.point.y - tooltipHeight - 10 : param.point.y + 10;
+      let xOffset = param.point.x + 15;
+      if (xOffset + tooltipWidth > chartContainerRef.current.clientWidth) {
+        xOffset = param.point.x - tooltipWidth - 15;
+      }
+      
+      tooltip.style.left = `${xOffset}px`;
+      tooltip.style.top = `${yOffset}px`;
+    });
 
     const handleResize = () => {
       if (chartContainerRef.current && chartRef.current) {
@@ -174,10 +258,18 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
   }, [historicalData, predictionData, height]);
 
   return (
-    <div
-      ref={chartContainerRef}
-      className="w-full rounded-lg bg-gradient-to-br from-gray-900/50 to-gray-800/50 p-4"
-      style={{ height }}
-    />
+    <div className="relative w-full h-full">
+      <div
+        ref={chartContainerRef}
+        className="w-full rounded-lg bg-gradient-to-br from-gray-900/50 to-gray-800/50 p-4"
+        style={{ height }}
+      />
+      {/* Tooltip Overlay */}
+      <div
+        ref={tooltipRef}
+        className="absolute z-50 pointer-events-none rounded bg-[#1a1f2e]/90 border border-border shadow-xl backdrop-blur-md p-2 text-sm"
+        style={{ display: 'none', transition: 'none' }}
+      />
+    </div>
   );
 };

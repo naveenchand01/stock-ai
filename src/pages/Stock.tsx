@@ -34,10 +34,6 @@ import {
   useStockForecastComparison
 } from "@/hooks/useStocks";
 import { ForecastCandlestickChart } from "@/components/charts/ForecastCandlestickChart";
-import { stocksApi } from "@/services/stocks.api";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Calendar } from "@/components/ui/calendar";
 
 const periodOptions = [
   { label: '1 Month', value: '1mo' },
@@ -47,6 +43,39 @@ const periodOptions = [
   { label: '5 Years', value: '5y' },
   { label: '15 Years', value: '15y' },
 ];
+
+// Timeframe intervals grouped for the TradingView-style picker
+const timeframeGroups = [
+  {
+    label: 'MINUTES',
+    options: [
+      { label: '1 minute', interval: '1m', period: '1d' },
+      { label: '2 minutes', interval: '2m', period: '1d' },
+      { label: '3 minutes', interval: '3m', period: '5d' },
+      { label: '5 minutes', interval: '5m', period: '5d' },
+      { label: '10 minutes', interval: '10m', period: '5d' },
+      { label: '15 minutes', interval: '15m', period: '5d' },
+      { label: '30 minutes', interval: '30m', period: '60d' },
+    ],
+  },
+  {
+    label: 'HOURS',
+    options: [
+      { label: '1 hour', interval: '60m', period: '60d' },
+      { label: '4 hours', interval: '4h', period: '60d' },
+    ],
+  },
+  {
+    label: 'DAYS',
+    options: [
+      { label: '1 day', interval: '1d', period: '1y' },
+      { label: '1 week', interval: '1wk', period: '5y' },
+      { label: '1 month', interval: '1mo', period: '15y' },
+    ],
+  },
+];
+
+const allTimeframeOptions = timeframeGroups.flatMap(g => g.options);
 
 const Forecast = () => {
   const [searchParams] = useSearchParams();
@@ -71,11 +100,29 @@ const Forecast = () => {
   const [selectedPeriod, setSelectedPeriod] = useState("1y");
   const [customDateRange, setCustomDateRange] = useState<{ start: string; end: string } | null>(null);
 
-  // New state for 1m Intraday Data
-  const [intradayData, setIntradayData] = useState<any[]>([]);
-  const [isIntradayLoading, setIsIntradayLoading] = useState(false);
+  // Intraday / multi-timeframe state (Live Intraday tab)
+  const [selectedTimeframe, setSelectedTimeframe] = useState(allTimeframeOptions[0]); // default: 1 minute
+  const [timeframeDropdownOpen, setTimeframeDropdownOpen] = useState(false);
+  // Custom timeframe date range
+  const [customTfStart, setCustomTfStart] = useState('');
+  const [customTfEnd, setCustomTfEnd] = useState('');
+  const [isCustomTf, setIsCustomTf] = useState(false);
 
-  const models = ["LSTM", "ARIMA", "SARIMA", "SARIMAX", "HYBRID", "RF", "XGBOOST", "CNN-LSTM"];
+  // Comparison chart timeframe state
+  const [compareTimeframe, setCompareTimeframe] = useState(allTimeframeOptions[0]); // default: 1 minute
+  const [compareDropdownOpen, setCompareDropdownOpen] = useState(false);
+  const [isCustomCompareTf, setIsCustomCompareTf] = useState(false);
+  const [customCompareStart, setCustomCompareStart] = useState('');
+  const [customCompareEnd, setCustomCompareEnd] = useState('');
+  const [customCompareIntervalNum, setCustomCompareIntervalNum] = useState('20');
+  const [customCompareIntervalUnit, setCustomCompareIntervalUnit] = useState('m');
+  const [appliedCustomCompareInterval, setAppliedCustomCompareInterval] = useState('20m');
+
+  const models = ["LSTM", "ARIMA"];
+
+  // Custom Accuracy Calculator State
+  const [calcActual, setCalcActual] = useState('');
+  const [calcPredicted, setCalcPredicted] = useState('');
 
   // Fetch standard historical data
   const { data: historicalData = [], isLoading: isHistoryLoading } = useHistoricalData(
@@ -88,47 +135,18 @@ const Forecast = () => {
 
   const { data: stockQuote } = useStockQuote(selectedSymbol);
 
-  // Intraday Polling Effect
-  useEffect(() => {
-    let intervalId: NodeJS.Timeout;
-
-    if (viewMode === "intraday" && selectedSymbol) {
-      const fetchIntraday = async () => {
-        try {
-          // Only show loading state on first fetch
-          if (intradayData.length === 0) setIsIntradayLoading(true);
-          const data = await stocksApi.getIntradayData(selectedSymbol);
-
-          // Data from API has { time: "YYYY-MM-DD HH:mm:ss", open, high, low, close, volume }
-          // Format it for the chart
-          const formattedData = data.map((d: any) => ({
-            date: new Date(d.time).getTime(), // Recharts/Lightweight charts can take ms timestamp or string
-            open: d.open,
-            high: d.high,
-            low: d.low,
-            close: d.close,
-            volume: d.volume
-          }));
-
-          setIntradayData(formattedData);
-        } catch (error) {
-          console.error("Failed to fetch intraday data:", error);
-        } finally {
-          setIsIntradayLoading(false);
-        }
-      };
-
-      // Fetch immediately
-      fetchIntraday();
-
-      // Poll every 60 seconds
-      intervalId = setInterval(fetchIntraday, 60000);
-    }
-
-    return () => {
-      if (intervalId) clearInterval(intervalId);
-    };
-  }, [viewMode, selectedSymbol]);
+  // Multi-timeframe intraday data via useHistoricalData (reactive, cached)
+  const {
+    data: intradayData = [],
+    isLoading: isIntradayLoading,
+    refetch: refetchIntraday,
+  } = useHistoricalData(
+    selectedSymbol,
+    isCustomTf ? 'max' : selectedTimeframe.period,
+    selectedTimeframe.interval,
+    isCustomTf ? customTfStart : undefined,
+    isCustomTf ? customTfEnd : undefined
+  );
 
   // Fetch actual predictions from our Python ML backend (falls back gracefully if offline)
   const { data: forecastData, isLoading: isForecastLoading } = useStockForecast(
@@ -143,13 +161,35 @@ const Forecast = () => {
     isLoading: isComparisonLoading,
     isRefetching: isComparisonRefetching,
     refetch: refetchComparison
-  } = useStockForecastComparison(selectedSymbol);
+  } = useStockForecastComparison(
+    selectedSymbol,
+    isCustomCompareTf ? appliedCustomCompareInterval : compareTimeframe.interval
+  );
 
-  // Intraday minute-by-minute data for Comparison Mode Candlesticks
+  // Helper to prevent requesting too much history for granular intraday intervals (which YF rejects)
+  const getSafePeriodForInterval = (intervalStr: string) => {
+    const match = intervalStr.match(/^(\d+)([mhd])$/);
+    if (!match) return '1mo';
+    const val = parseInt(match[1]);
+    const unit = match[2];
+
+    if (unit === 'm') {
+      if (val < 15) return '1d';
+      if (val < 60) return '5d';
+      return '1mo';
+    }
+    if (unit === 'h') return '1mo';
+    if (unit === 'd') return '1y';
+    return '1mo';
+  };
+
+  // Intraday data for Comparison Mode — driven by compareTimeframe
   const { data: intradayCompareData = [], isLoading: isIntradayCompareLoading } = useHistoricalData(
     selectedSymbol,
-    "1d",
-    "1m"
+    isCustomCompareTf ? getSafePeriodForInterval(appliedCustomCompareInterval) : compareTimeframe.period,
+    isCustomCompareTf ? appliedCustomCompareInterval : compareTimeframe.interval,
+    undefined,
+    undefined
   );
 
   const isLoading = isHistoryLoading || isForecastLoading || (viewMode === "comparison" && (isComparisonLoading || isIntradayCompareLoading));
@@ -281,7 +321,7 @@ const Forecast = () => {
       const futureTime = lastIntradayTime + (p.minutes * 60 * 1000);
       return {
         time: futureTime,
-        prediction: p.predictedPrice,
+        prediction: selectedModel === "ARIMA" ? p.arimaPrice : p.lstmPrice,
       };
     });
   }, [comparisonData, intradayCompareData]);
@@ -529,15 +569,78 @@ const Forecast = () => {
 
                 {/* Primary Chart (Full Width) */}
                 <div className="glass-card p-6 w-full">
-                  <div className="flex items-center justify-between mb-6">
+                  <div className="flex flex-col md:flex-row md:items-start justify-between mb-6 gap-4">
                     <div>
                       <h3 className="font-bold text-xl text-primary mb-1">
                         {selectedSymbol} {stockQuote?.name ? `- ${stockQuote.name}` : ''}
                       </h3>
                       <h4 className="font-semibold text-md text-foreground">Predicted Horizon vs. Live Quote</h4>
-                      <p className="text-xs text-muted-foreground mt-0.5">Discrete interval comparison based on drift & momentum scaling</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Interval: <span className="text-primary font-medium">{compareTimeframe.label}</span> · Discrete interval comparison based on drift &amp; momentum scaling</p>
                     </div>
-                    <div className="flex items-center gap-4">
+
+                    {/* Right side controls */}
+                    <div className="flex flex-wrap items-center gap-3">
+                      {/* TradingView-style timeframe dropdown */}
+                      <div className="relative">
+                        <button
+                          onClick={() => setCompareDropdownOpen(v => !v)}
+                          className="flex items-center gap-2 bg-secondary border border-border rounded-md px-3 py-1.5 text-sm font-medium hover:bg-secondary/80 transition-colors"
+                        >
+                          <Clock className="h-4 w-4 text-primary" />
+                          {isCustomCompareTf ? 'Custom' : compareTimeframe.label}
+                          <svg className={`h-3.5 w-3.5 ml-1 transition-transform ${compareDropdownOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                        </button>
+
+                        {compareDropdownOpen && (
+                          <>
+                            <div className="fixed inset-0 z-10" onClick={() => setCompareDropdownOpen(false)} />
+                            <div className="absolute right-0 mt-2 z-20 bg-[#1a1f2e] border border-border rounded-xl shadow-2xl w-52 py-2 backdrop-blur-xl">
+                              {timeframeGroups.map(group => (
+                                <div key={group.label}>
+                                  <div className="flex items-center justify-between px-4 py-1.5">
+                                    <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{group.label}</span>
+                                    <svg className="h-3 w-3 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="18 15 12 9 6 15" /></svg>
+                                  </div>
+                                  {group.options.map(opt => (
+                                    <button
+                                      key={opt.interval + opt.label}
+                                      onClick={() => {
+                                        setCompareTimeframe(opt);
+                                        setIsCustomCompareTf(false);
+                                        setCompareDropdownOpen(false);
+                                      }}
+                                      className={`w-full text-left px-6 py-2 text-sm transition-colors ${!isCustomCompareTf && compareTimeframe.label === opt.label
+                                        ? 'bg-primary/20 text-primary font-semibold'
+                                        : 'text-foreground hover:bg-secondary/60'
+                                        }`}
+                                    >
+                                      {opt.label}
+                                    </button>
+                                  ))}
+                                </div>
+                              ))}
+
+                              {/* Divider */}
+                              <div className="border-t border-border my-1" />
+
+                              {/* Custom option */}
+                              <button
+                                onClick={() => {
+                                  setIsCustomCompareTf(true);
+                                  setCompareDropdownOpen(false);
+                                }}
+                                className={`w-full text-left px-4 py-2 text-sm transition-colors ${isCustomCompareTf
+                                  ? 'bg-primary/20 text-primary font-semibold'
+                                  : 'text-foreground hover:bg-secondary/60'
+                                  }`}
+                              >
+                                Custom Range...
+                              </button>
+                            </div>
+                          </>
+                        )}
+                      </div>
+
                       <div className="flex items-center gap-2">
                         <div className="w-3 h-3 rounded-full bg-blue-500" />
                         <span className="text-xs text-muted-foreground font-medium">ML Prediction</span>
@@ -554,6 +657,43 @@ const Forecast = () => {
                       </Button>
                     </div>
                   </div>
+
+                  {/* Custom date-range inputs for Comparison */}
+                  {isCustomCompareTf && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      className="flex flex-wrap items-center gap-3 mb-5 p-3 bg-secondary/30 rounded-lg border border-border"
+                    >
+                      <span className="text-sm text-muted-foreground">Custom Interval:</span>
+                      <div className="flex items-center -space-x-px">
+                        <input
+                          type="number"
+                          min="1"
+                          value={customCompareIntervalNum}
+                          onChange={e => setCustomCompareIntervalNum(e.target.value)}
+                          className="w-16 bg-background border border-border rounded-l-md px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:z-10 relative"
+                        />
+                        <select
+                          value={customCompareIntervalUnit}
+                          onChange={e => setCustomCompareIntervalUnit(e.target.value)}
+                          className="bg-secondary border border-border rounded-r-md px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary focus:z-10 relative"
+                        >
+                          <option value="m">minutes</option>
+                          <option value="h">hours</option>
+                          <option value="d">days</option>
+                        </select>
+                      </div>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        className="ml-2 h-8"
+                        onClick={() => setAppliedCustomCompareInterval(`${customCompareIntervalNum}${customCompareIntervalUnit}`)}
+                      >
+                        Search
+                      </Button>
+                    </motion.div>
+                  )}
 
                   <div className="h-[350px] w-full">
                     {intradayCompareData.length > 0 ? (
@@ -608,7 +748,7 @@ const Forecast = () => {
                           <tr className="border-b border-border text-muted-foreground pb-2 text-xs uppercase font-medium">
                             <th className="py-2">Algorithm</th>
                             <th className="py-2 text-right">Actual Price</th>
-                            <th className="py-2 text-right">Predicted Price (1D)</th>
+                            <th className="py-2 text-right">Predicted Price ({comparisonData?.predictions?.[0]?.label || '1D'})</th>
                             <th className="py-2 text-right">Accuracy</th>
                             <th className="py-2 text-right">Est. Confidence</th>
                             <th className="py-2 text-right">Signal</th>
@@ -616,16 +756,13 @@ const Forecast = () => {
                         </thead>
                         <tbody className="divide-y divide-border">
                           {(() => {
-                            const basePrediction = comparisonData.predictions.find((p: any) => p.minutes === 390)?.predictedPrice || comparisonData.currentRealPrice;
+                            const lstmBase = comparisonData.predictions?.[0]?.lstmPrice || comparisonData.currentRealPrice;
+                            const arimaBase = comparisonData.predictions?.[0]?.arimaPrice || comparisonData.currentRealPrice;
                             const livePrice = comparisonData.currentRealPrice;
 
                             const algoPredictions = [
-                              { name: "LSTM", value: basePrediction * 1.0015, conf: 92 },
-                              { name: "ARIMA", value: basePrediction * 0.9985, conf: 85 },
-                              { name: "CNN", value: basePrediction * 1.0025, conf: 89 },
-                              { name: "Hybrid (CNN-LSTM)", value: basePrediction * 1.0010, conf: 95 },
-                              { name: "Random Forest", value: basePrediction * 0.9975, conf: 82 },
-                              { name: "XGBoost", value: basePrediction * 1.0030, conf: 88 }
+                              { name: "LSTM", value: lstmBase, conf: 95 },
+                              { name: "ARIMA", value: arimaBase, conf: 85 }
                             ];
 
                             return algoPredictions.map((algo) => {
@@ -667,11 +804,59 @@ const Forecast = () => {
                   </div>
                 )}
 
+                {/* Accuracy Calculator */}
+                <div className="glass-card p-5 bg-secondary/10 mt-6 mb-6 border border-border/50 rounded-xl">
+                  <div className="flex items-center justify-between mb-4">
+                    <h4 className="font-semibold text-foreground flex items-center gap-2">
+                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-primary"><rect width="16" height="20" x="4" y="2" rx="2" /><line x1="8" x2="16" y1="6" y2="6" /><line x1="16" x2="16.01" y1="10" y2="10" /><line x1="12" x2="12.01" y1="10" y2="10" /><line x1="8" x2="8.01" y1="10" y2="10" /><line x1="8" x2="8.01" y1="14" y2="14" /><line x1="12" x2="12.01" y1="14" y2="14" /><line x1="16" x2="16.01" y1="14" y2="14" /><line x1="8" x2="8.01" y1="18" y2="18" /><line x1="12" x2="12.01" y1="18" y2="18" /><line x1="16" x2="16.01" y1="18" y2="18" /></svg>
+                      Manual Accuracy Calculator
+                    </h4>
+                    <button
+                      onClick={() => { setCalcActual(''); setCalcPredicted(''); }}
+                      className="text-xs px-3 py-1.5 rounded bg-secondary/50 hover:bg-secondary text-muted-foreground hover:text-foreground transition-colors border border-border/50"
+                    >
+                      Clear
+                    </button>
+                  </div>
+                  <div className="flex flex-col sm:flex-row gap-4 items-center">
+                    <div className="flex-1 w-full relative">
+                      <label className="text-xs text-muted-foreground uppercase font-medium mb-1 block">Actual Price</label>
+                      <input
+                        type="number"
+                        value={calcActual}
+                        onChange={(e) => setCalcActual(e.target.value)}
+                        placeholder="e.g. 1328.80"
+                        className="w-full bg-background border border-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground font-mono"
+                      />
+                    </div>
+                    <div className="flex-1 w-full relative">
+                      <label className="text-xs text-muted-foreground uppercase font-medium mb-1 block">Predicted Price</label>
+                      <input
+                        type="number"
+                        value={calcPredicted}
+                        onChange={(e) => setCalcPredicted(e.target.value)}
+                        placeholder="e.g. 1329.71"
+                        className="w-full bg-background border border-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary text-foreground font-mono"
+                      />
+                    </div>
+                    <div className="flex-1 w-full sm:pt-5">
+                      <div className="h-[38px] bg-secondary/30 rounded flex items-center justify-between px-4 border border-border/50">
+                        <span className="text-xs text-muted-foreground uppercase font-medium">Result:</span>
+                        <span className="font-mono font-semibold text-primary">
+                          {calcActual && calcPredicted && !isNaN(Number(calcActual)) && !isNaN(Number(calcPredicted)) && Number(calcActual) > 0
+                            ? Math.max(0, 100 - Math.abs(((Number(calcPredicted) - Number(calcActual)) / Number(calcActual)) * 100)).toFixed(2) + '%'
+                            : '--.--%'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Mathematical Details Card */}
                 <div className="glass-card p-5 bg-secondary/20">
                   <h4 className="font-semibold mb-2 text-foreground">Formula &amp; Drift Details</h4>
                   <p className="text-sm text-muted-foreground leading-relaxed">
-                    This backtesting dashboard generates predictions using the **Geometric Brownian Expected Return model** combined with **intraday volume scaling and momentum**.
+                    This backtesting dashboard generates predictions using the Geometric Brownian Expected Return model combined with intraday volume scaling and momentum.
                     The historical mean log return (drift = {comparisonData.stats60Day.drift}) and volatility (standard deviation = {comparisonData.stats60Day.volatility}) are computed over the last 60 trading days.
                     The projection adjusts for relative trading volume (VolumeRatio = {Math.log(1 + (comparisonData.lastDay?.volume / (comparisonData.stats60Day.averageVolume || 1))).toFixed(4)})
                     and previous close momentum to predict targets.
@@ -692,19 +877,146 @@ const Forecast = () => {
             exit={{ opacity: 0, y: -10 }}
             className="glass-card p-6 min-h-[500px]"
           >
-            <div className="flex items-center justify-between mb-6">
+            {/* Header row */}
+            <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
               <div>
                 <h3 className="font-semibold text-lg uppercase text-primary font-mono flex items-center gap-2">
                   <Activity className="h-5 w-5 animate-pulse" />
-                  {selectedSymbol} Live Intraday (1m)
+                  {selectedSymbol} &mdash; {isCustomTf ? 'Custom Range' : selectedTimeframe.label}
                 </h3>
-                <p className="text-sm text-muted-foreground mt-1">Data refreshes automatically every 60 seconds.</p>
+                <p className="text-sm text-muted-foreground mt-1">
+                  {isCustomTf
+                    ? `From ${customTfStart || '—'} to ${customTfEnd || '—'} · ${selectedTimeframe.label} candles`
+                    : `Interval: ${selectedTimeframe.interval} · Period: ${selectedTimeframe.period}`
+                  }
+                </p>
+              </div>
+
+              {/* TradingView-style timeframe picker */}
+              <div className="flex items-center gap-3 flex-wrap">
+                {/* Dropdown trigger */}
+                <div className="relative">
+                  <button
+                    onClick={() => setTimeframeDropdownOpen(v => !v)}
+                    className="flex items-center gap-2 bg-secondary border border-border rounded-md px-3 py-1.5 text-sm font-medium hover:bg-secondary/80 transition-colors"
+                  >
+                    <Clock className="h-4 w-4 text-primary" />
+                    {isCustomTf ? 'Custom' : selectedTimeframe.label}
+                    <svg className={`h-3.5 w-3.5 ml-1 transition-transform ${timeframeDropdownOpen ? 'rotate-180' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9" /></svg>
+                  </button>
+
+                  {timeframeDropdownOpen && (
+                    <>
+                      {/* Backdrop */}
+                      <div
+                        className="fixed inset-0 z-10"
+                        onClick={() => setTimeframeDropdownOpen(false)}
+                      />
+                      {/* Dropdown panel */}
+                      <div className="absolute right-0 mt-2 z-20 bg-[#1a1f2e] border border-border rounded-xl shadow-2xl w-52 py-2 backdrop-blur-xl">
+                        {timeframeGroups.map(group => (
+                          <div key={group.label}>
+                            {/* Group header */}
+                            <div className="flex items-center justify-between px-4 py-1.5">
+                              <span className="text-[10px] font-bold tracking-widest text-muted-foreground uppercase">{group.label}</span>
+                              <svg className="h-3 w-3 text-muted-foreground" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="18 15 12 9 6 15" /></svg>
+                            </div>
+                            {/* Options */}
+                            {group.options.map(opt => (
+                              <button
+                                key={opt.interval + opt.label}
+                                onClick={() => {
+                                  setSelectedTimeframe(opt);
+                                  setIsCustomTf(false);
+                                  setTimeframeDropdownOpen(false);
+                                }}
+                                className={`w-full text-left px-6 py-2 text-sm transition-colors ${!isCustomTf && selectedTimeframe.label === opt.label
+                                  ? 'bg-primary/20 text-primary font-semibold'
+                                  : 'text-foreground hover:bg-secondary/60'
+                                  }`}
+                              >
+                                {opt.label}
+                              </button>
+                            ))}
+                          </div>
+                        ))}
+
+                        {/* Divider */}
+                        <div className="border-t border-border my-1" />
+
+                        {/* Custom option */}
+                        <button
+                          onClick={() => {
+                            setIsCustomTf(true);
+                            setTimeframeDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm transition-colors ${isCustomTf
+                            ? 'bg-primary/20 text-primary font-semibold'
+                            : 'text-foreground hover:bg-secondary/60'
+                            }`}
+                        >
+                          Custom Range...
+                        </button>
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Refresh button */}
+                <button
+                  onClick={() => refetchIntraday()}
+                  className="flex items-center gap-2 bg-secondary border border-border rounded-md px-3 py-1.5 text-sm hover:bg-secondary/80 transition-colors"
+                  title="Refresh data"
+                >
+                  <RefreshCw className="h-3.5 w-3.5" />
+                  Refresh
+                </button>
               </div>
             </div>
 
+            {/* Custom date-range inputs */}
+            {isCustomTf && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="flex flex-wrap items-center gap-3 mb-5 p-3 bg-secondary/30 rounded-lg border border-border"
+              >
+                <CalendarIcon className="h-4 w-4 text-primary shrink-0" />
+                <span className="text-sm text-muted-foreground">From</span>
+                <input
+                  type="datetime-local"
+                  value={customTfStart}
+                  onChange={e => setCustomTfStart(e.target.value)}
+                  className="bg-background border border-border rounded-md px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+                <span className="text-sm text-muted-foreground">to</span>
+                <input
+                  type="datetime-local"
+                  value={customTfEnd}
+                  onChange={e => setCustomTfEnd(e.target.value)}
+                  className="bg-background border border-border rounded-md px-2 py-1 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-primary"
+                />
+                <span className="text-sm text-muted-foreground">Interval:</span>
+                <select
+                  value={selectedTimeframe.interval}
+                  onChange={e => {
+                    const found = allTimeframeOptions.find(o => o.interval === e.target.value);
+                    if (found) setSelectedTimeframe(found);
+                  }}
+                  className="bg-secondary border border-border rounded-md px-2 py-1 text-sm text-foreground"
+                >
+                  {allTimeframeOptions.map(o => (
+                    <option key={o.interval + o.label} value={o.interval}>{o.label}</option>
+                  ))}
+                </select>
+              </motion.div>
+            )}
+
+            {/* Chart */}
             {isIntradayLoading ? (
-              <div className="h-96 flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              <div className="h-[500px] flex flex-col items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin text-primary mb-3" />
+                <span className="text-muted-foreground text-sm">Loading {isCustomTf ? 'custom' : selectedTimeframe.label} data...</span>
               </div>
             ) : intradayData.length > 0 ? (
               <ForecastCandlestickChart
@@ -713,8 +1025,10 @@ const Forecast = () => {
                 height={500}
               />
             ) : (
-              <div className="h-96 flex items-center justify-center text-muted-foreground">
-                No intraday data available. The market may be closed.
+              <div className="h-[500px] flex flex-col items-center justify-center text-muted-foreground gap-2">
+                <Activity className="h-10 w-10 opacity-30" />
+                <p>No data available for <span className="font-medium text-foreground">{selectedTimeframe.label}</span> interval.</p>
+                <p className="text-xs">The market may be closed or the interval is unsupported for this period.</p>
               </div>
             )}
           </motion.div>

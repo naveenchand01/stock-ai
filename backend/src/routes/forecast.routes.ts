@@ -61,11 +61,12 @@ router.get('/:symbol', async (req: Request, res: Response) => {
  */
 router.get('/compare/:symbol', async (req: Request, res: Response) => {
   const { symbol } = req.params;
-  logger.info(`Comparison forecast request received for ${symbol}`);
+  const { interval } = req.query;
+  logger.info(`Comparison forecast request received for ${symbol}, interval: ${interval}`);
 
   try {
     const { forecastService } = require('../services/forecast.service');
-    const data = await forecastService.getComparisonData(symbol);
+    const data = await forecastService.getComparisonData(symbol, (interval as string) || '1m');
     return res.json(data);
   } catch (error: any) {
     logger.error(`Error generating forecast comparison data:`, error);

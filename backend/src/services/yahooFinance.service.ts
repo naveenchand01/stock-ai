@@ -77,20 +77,70 @@ class YahooFinanceService {
     interval: string = '1d'
   ) {
     try {
-      logger.debug(`Yahoo Finance API Request: GET historical data (chart) for ${symbol} with interval ${interval}`);
+      let fetchInterval = interval;
+      let needsResampling = false;
+      let targetMinutes = 0;
+
+      const VALID_YF_INTERVALS = ['1m', '2m', '5m', '15m', '30m', '60m', '90m', '1h', '1d', '5d', '1wk', '1mo', '3mo'];
+
+      // If the interval is natively supported by Yahoo Finance, use it directly.
+      if (VALID_YF_INTERVALS.includes(interval)) {
+        fetchInterval = interval;
+      } else {
+        // Dynamic resampling for custom intervals (e.g. '7m', '20m', '2h', '3d')
+        needsResampling = true;
+        const match = interval.match(/^(\d+)([mhd])$/);
+        
+        if (match) {
+          const val = parseInt(match[1]);
+          const unit = match[2];
+          
+          const p1 = new Date(period1).getTime();
+          const p2 = period2 ? new Date(period2).getTime() : Date.now();
+          const daysDiff = Math.abs((p2 - p1) / (1000 * 60 * 60 * 24));
+
+          if (unit === 'm') {
+            targetMinutes = val;
+            if (daysDiff > 60) fetchInterval = '1h';
+            else if (daysDiff > 7) fetchInterval = '5m';
+            else fetchInterval = '1m';
+          } else if (unit === 'h') {
+            targetMinutes = val * 60;
+            if (daysDiff > 730) fetchInterval = '1d';
+            else fetchInterval = '1h';
+          } else if (unit === 'd') {
+            targetMinutes = val * 24 * 60;
+            fetchInterval = '1d';
+          }
+        } else {
+          // Fallback if parsing fails
+          fetchInterval = '1d';
+          targetMinutes = 1440; 
+          needsResampling = false;
+        }
+      }
+
+      logger.debug(`Yahoo Finance API Request: GET historical data (chart) for ${symbol} with interval ${fetchInterval}`);
 
       const queryOptions = {
         period1,
         period2: period2 || new Date(),
-        interval: interval as any,
+        interval: fetchInterval as any,
       };
 
       // We use chart API because it supports intraday intervals like '5m', '15m'
       // and .historical() restricts to 1d, 1wk, 1mo and is being deprecated.
       const result = await this.yahooFinance.chart(symbol, queryOptions);
 
+      // Filter out empty candles (market hasn't opened yet for this period)
+      let quotes = (result.quotes || []).filter((q: any) => q.close !== null && q.close !== undefined);
+
+      if (needsResampling && quotes.length > 0) {
+        quotes = this.resampleQuotes(quotes, targetMinutes);
+      }
+
       logger.debug(`Yahoo Finance API Response: Successfully fetched historical data for ${symbol}`);
-      return result.quotes || [];
+      return quotes;
     } catch (error: any) {
       if (error.name === 'FailedYahooValidationError') {
         logger.debug(`Yahoo Finance API Response: Validation Error bypassed for historical data ${symbol}`);
@@ -171,6 +221,45 @@ class YahooFinanceService {
       });
       throw error;
     }
+  }
+
+  /**
+   * Resamples smaller interval candlestick quotes into larger intervals.
+   */
+  private resampleQuotes(quotes: any[], targetMinutes: number): any[] {
+    const resampled: any[] = [];
+    let currentBucket: any = null;
+    let currentBucketTime = 0;
+
+    for (const quote of quotes) {
+      if (!quote.date) continue;
+      
+      const timeMs = new Date(quote.date).getTime();
+      // Group by the target bucket length
+      const bucketTime = Math.floor(timeMs / (targetMinutes * 60 * 1000)) * (targetMinutes * 60 * 1000);
+
+      if (!currentBucket || bucketTime !== currentBucketTime) {
+        if (currentBucket) resampled.push(currentBucket);
+        currentBucketTime = bucketTime;
+        currentBucket = {
+          date: new Date(bucketTime),
+          open: quote.open,
+          high: quote.high,
+          low: quote.low,
+          close: quote.close,
+          volume: quote.volume || 0,
+        };
+      } else {
+        // Aggregate values for the same bucket
+        if (quote.high > currentBucket.high) currentBucket.high = quote.high;
+        if (quote.low < currentBucket.low) currentBucket.low = quote.low;
+        currentBucket.close = quote.close;
+        currentBucket.volume += (quote.volume || 0);
+      }
+    }
+
+    if (currentBucket) resampled.push(currentBucket);
+    return resampled;
   }
 }
 

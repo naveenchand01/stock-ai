@@ -77,6 +77,20 @@ export const useMarketIndices = (): UseQueryResult<MarketIndex[], Error> => {
 };
 
 /**
+ * Helper to convert interval strings like '1m', '2h', '1d' into milliseconds
+ */
+const getIntervalMs = (intervalStr: string): number => {
+  const match = intervalStr.match(/^(\d+)([mhd])$/);
+  if (!match) return 60000; // default 1 minute
+  const val = parseInt(match[1]);
+  const unit = match[2];
+  if (unit === 'm') return val * 60 * 1000;
+  if (unit === 'h') return val * 60 * 60 * 1000;
+  if (unit === 'd') return val * 24 * 60 * 60 * 1000;
+  return 60000;
+};
+
+/**
  * Hook to fetch historical data for a stock
  */
 export const useHistoricalData = (
@@ -89,7 +103,8 @@ export const useHistoricalData = (
   return useQuery({
     queryKey: ['stocks', 'historical', symbol, period, interval, startDate, endDate],
     queryFn: () => stocksApi.getHistoricalData(symbol, period, interval, startDate, endDate),
-    staleTime: 300000, // 5 minutes
+    staleTime: 60000, // 1 minute
+    refetchInterval: getIntervalMs(interval),
     enabled: !!symbol,
   });
 };
@@ -118,12 +133,12 @@ export const useStockForecast = (
 /**
  * Hook to fetch prediction comparison data (formula calculations vs live data)
  */
-export const useStockForecastComparison = (symbol: string): UseQueryResult<any, Error> => {
+export const useStockForecastComparison = (symbol: string, interval: string = '1m'): UseQueryResult<any, Error> => {
   return useQuery({
-    queryKey: ['stocks', 'forecast-comparison', symbol],
-    queryFn: () => stocksApi.getForecastComparison(symbol),
+    queryKey: ['stocks', 'forecast-comparison', symbol, interval],
+    queryFn: () => stocksApi.getForecastComparison(symbol, interval),
     staleTime: 10000, // 10 seconds cache for live comparisons
-    refetchInterval: 10000, // Auto-refresh every 10 seconds
+    refetchInterval: getIntervalMs(interval),
     enabled: !!symbol,
   });
 };

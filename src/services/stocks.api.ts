@@ -103,8 +103,9 @@ export const stocksApi = {
    * Get forecast comparison data (predicted vs real-time)
    */
   getForecastComparison: async (
-    symbol: string
+    symbol: string,
+    interval: string = '1m'
   ): Promise<any> => {
-    return apiClient.get(`/forecast/compare/${symbol}`);
+    return apiClient.get(`/forecast/compare/${symbol}?interval=${interval}`);
   },
 };
