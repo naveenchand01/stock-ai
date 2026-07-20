@@ -7,9 +7,10 @@ interface ForecastCandlestickChartProps {
   predictionData: { time: number; prediction: number }[];
   height?: number;
   livePrice?: number;
+  hideTooltip?: boolean;
 }
 
-export const ForecastCandlestickChart = ({ historicalData, predictionData, height = 400, livePrice }: ForecastCandlestickChartProps) => {
+export const ForecastCandlestickChart = ({ historicalData, predictionData, height = 400, livePrice, hideTooltip = false }: ForecastCandlestickChartProps) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const tooltipRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<any>(null);
@@ -137,8 +138,9 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
     volumeSeries.setData(volumeData);
 
     // Add prediction line series
+    let lineSeries: any = null;
     if (predictionData && predictionData.length > 0) {
-      const lineSeries = chart.addSeries(LineSeries, {
+      lineSeries = chart.addSeries(LineSeries, {
         color: '#3b82f6',
         lineWidth: 2,
         lineStyle: 2, // Dashed line
@@ -148,13 +150,23 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
       const lineData = [];
       const seenLineTimes = new Set();
       
-      // Determine a step size for interpolation: 1 day (86400s) for daily+, true interval for intraday.
-      // We MUST use the first two candles to determine the interval. The last candle is a live snapshot and might only be 1 min away from the previous.
       const trueTimeDiff = candleData.length > 2 ? candleData[1].time - candleData[0].time : 60;
       const stepSize = trueTimeDiff > 0 ? trueTimeDiff : 60;
 
-      const lastHistorical = candleData[candleData.length - 1];
-      let prevPoint = lastHistorical ? { time: lastHistorical.time, value: lastHistorical.close } : null;
+      // Find the true base candle (ignore live snapshot which is off-grid)
+      let baseCandleIdx = candleData.length - 1;
+      if (candleData.length > 2) {
+        const lastTime = candleData[baseCandleIdx].time;
+        const secondLastTime = candleData[baseCandleIdx - 1].time;
+        // If the gap differs from the true interval by more than 60 seconds,
+        // it means the last candle is an off-grid live snapshot.
+        if (Math.abs((lastTime - secondLastTime) - stepSize) > 60) {
+          baseCandleIdx = baseCandleIdx - 1;
+        }
+      }
+
+      const baseCandle = candleData[baseCandleIdx];
+      let prevPoint = baseCandle ? { time: baseCandle.time, value: baseCandle.close } : null;
 
       if (prevPoint) {
         lineData.push({ time: prevPoint.time as any, value: prevPoint.value });
@@ -207,8 +219,9 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
     chart.timeScale().fitContent();
 
     // Setup Crosshair Tooltip
-    chart.subscribeCrosshairMove((param) => {
-      const tooltip = tooltipRef.current;
+    if (!hideTooltip) {
+      chart.subscribeCrosshairMove((param) => {
+        const tooltip = tooltipRef.current;
       if (!tooltip || !chartContainerRef.current) return;
 
       if (
@@ -244,9 +257,13 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
       if (predictionData && predictionData.length > 0) {
         const predInfo: any = param.seriesData.get(lineSeries);
         if (predInfo && predInfo.value !== undefined) {
-          html += `<div style="color:#3b82f6; font-size:13px; font-weight:bold; margin-top:4px;">
-            ML Prediction: ₹${predInfo.value.toFixed(2)}
-          </div>`;
+          // Verify it's a true prediction point, not an interpolated point or base anchor
+          const isTruePrediction = predictionData.some(p => Math.floor(p.time / 1000) - tzOffset === param.time);
+          if (isTruePrediction) {
+            html += `<div style="color:#3b82f6; font-size:13px; font-weight:bold; margin-top:4px;">
+              ML Prediction: ₹${predInfo.value.toFixed(2)}
+            </div>`;
+          }
         }
       }
 
@@ -264,7 +281,8 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
       
       tooltip.style.left = `${xOffset}px`;
       tooltip.style.top = `${yOffset}px`;
-    });
+      });
+    }
 
     const handleResize = () => {
       if (chartContainerRef.current && chartRef.current) {
@@ -283,21 +301,20 @@ export const ForecastCandlestickChart = ({ historicalData, predictionData, heigh
         chartRef.current = null;
       }
     };
-  }, [historicalData, predictionData, height]);
+  }, [historicalData, predictionData, height, hideTooltip]);
 
   return (
-    <div className="relative w-full h-full">
-      <div
-        ref={chartContainerRef}
-        className="w-full rounded-lg bg-gradient-to-br from-gray-900/50 to-gray-800/50 p-4"
-        style={{ height }}
-      />
-      {/* Tooltip Overlay */}
-      <div
-        ref={tooltipRef}
-        className="absolute z-50 pointer-events-none rounded bg-[#1a1f2e]/90 border border-border shadow-xl backdrop-blur-md p-2 text-sm"
-        style={{ display: 'none', transition: 'none' }}
-      />
+    <div className="relative w-full" style={{ height }}>
+      <div ref={chartContainerRef} className="w-full h-full" />
+      {!hideTooltip && (
+        <div
+          ref={tooltipRef}
+          className="absolute z-50 pointer-events-none hidden bg-[#1E222D]/90 border border-border rounded-md shadow-lg p-3"
+          style={{
+            transition: 'transform 0.1s ease',
+          }}
+        />
+      )}
     </div>
   );
 };

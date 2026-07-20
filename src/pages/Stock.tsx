@@ -134,11 +134,11 @@ const Forecast = () => {
   );
 
   const { data: stockQuote, isLoading: isQuoteLoading } = useStockQuote(selectedSymbol);
-  const currentPrice = stockQuote?.regularMarketPrice || stockQuote?.price || 0;
+  const currentPrice = stockQuote?.price || 0;
 
   // Multi-timeframe intraday data via useHistoricalData (reactive, cached)
   const {
-    data: intradayData = [],
+    data: rawIntradayData = [],
     isLoading: isIntradayLoading,
     refetch: refetchIntraday,
   } = useHistoricalData(
@@ -148,6 +148,22 @@ const Forecast = () => {
     isCustomTf ? customTfStart : undefined,
     isCustomTf ? customTfEnd : undefined
   );
+
+  const intradayData = useMemo(() => {
+    if (rawIntradayData.length < 3) return rawIntradayData;
+    const data = [...rawIntradayData];
+    const t1 = new Date(data[0].date).getTime();
+    const t2 = new Date(data[1].date).getTime();
+    const trueIntervalMs = t2 - t1;
+    const last = new Date(data[data.length - 1].date).getTime();
+    const secondLast = new Date(data[data.length - 2].date).getTime();
+    
+    // If the gap differs by more than 1 min tolerance, it's an off-grid snapshot
+    if (Math.abs((last - secondLast) - trueIntervalMs) > 60000) {
+      data.pop();
+    }
+    return data;
+  }, [rawIntradayData]);
 
   // Fetch actual predictions from our Python ML backend (falls back gracefully if offline)
   const { data: forecastData, isLoading: isForecastLoading } = useStockForecast(
@@ -185,13 +201,29 @@ const Forecast = () => {
   };
 
   // Intraday data for Comparison Mode — driven by compareTimeframe
-  const { data: intradayCompareData = [], isLoading: isIntradayCompareLoading } = useHistoricalData(
+  const { data: rawIntradayCompareData = [], isLoading: isIntradayCompareLoading } = useHistoricalData(
     selectedSymbol,
     isCustomCompareTf ? getSafePeriodForInterval(appliedCustomCompareInterval) : compareTimeframe.period,
     isCustomCompareTf ? appliedCustomCompareInterval : compareTimeframe.interval,
     undefined,
     undefined
   );
+
+  const intradayCompareData = useMemo(() => {
+    if (rawIntradayCompareData.length < 3) return rawIntradayCompareData;
+    const data = [...rawIntradayCompareData];
+    const t1 = new Date(data[0].date).getTime();
+    const t2 = new Date(data[1].date).getTime();
+    const trueIntervalMs = t2 - t1;
+    const last = new Date(data[data.length - 1].date).getTime();
+    const secondLast = new Date(data[data.length - 2].date).getTime();
+    
+    // If the gap differs by more than 1 min tolerance, it's an off-grid snapshot
+    if (Math.abs((last - secondLast) - trueIntervalMs) > 60000) {
+      data.pop();
+    }
+    return data;
+  }, [rawIntradayCompareData]);
 
   const isLoading = isHistoryLoading || isForecastLoading || (viewMode === "comparison" && (isComparisonLoading || isIntradayCompareLoading));
 
@@ -731,6 +763,7 @@ const Forecast = () => {
                         historicalData={intradayCompareData}
                         predictionData={comparisonPredictionData}
                         height={350}
+                        hideTooltip={true}
                       />
                     ) : (
                       <div className="h-full flex items-center justify-center text-muted-foreground border border-border rounded-md">
@@ -786,9 +819,12 @@ const Forecast = () => {
                         </thead>
                         <tbody className="divide-y divide-border">
                           {(() => {
-                            const lstmBase = comparisonData.predictions?.[0]?.lstmPrice || comparisonData.currentRealPrice;
-                            const arimaBase = comparisonData.predictions?.[0]?.arimaPrice || comparisonData.currentRealPrice;
-                            const livePrice = comparisonData.currentRealPrice;
+                            const livePrice = currentPrice || comparisonData.currentRealPrice;
+                            const backendBase = comparisonData.currentRealPrice || livePrice;
+                            const priceShift = livePrice - backendBase;
+
+                            const lstmBase = (comparisonData.predictions?.[0]?.lstmPrice || backendBase) + priceShift;
+                            const arimaBase = (comparisonData.predictions?.[0]?.arimaPrice || backendBase) + priceShift;
 
                             const algoPredictions = [
                               { name: "LSTM", value: lstmBase, conf: 95 },
@@ -1054,6 +1090,7 @@ const Forecast = () => {
                 predictionData={[]}
                 height={500}
                 livePrice={currentPrice}
+                hideTooltip={true}
               />
             ) : (
               <div className="h-[500px] flex flex-col items-center justify-center text-muted-foreground gap-2">

@@ -22,8 +22,8 @@ export const useStockQuote = (symbol: string): UseQueryResult<Stock, Error> => {
   return useQuery({
     queryKey: ['stocks', 'quote', symbol],
     queryFn: () => stocksApi.getQuote(symbol),
-    staleTime: 5000, // 5 seconds for live dashboard updates
-    refetchInterval: 5000,
+    staleTime: 1000, // 1 second for aggressive live updates
+    refetchInterval: 1000,
     enabled: !!symbol,
   });
 };
