@@ -37,7 +37,12 @@ app.use((req, res, next) => {
 const reportPath = path.join(__dirname, '../ml_service/dissertation_results/report');
 app.use('/report', express.static(reportPath));
 app.get('/report', (req, res) => {
-  res.sendFile(path.join(reportPath, 'dissertation_report.html'));
+  const reportFile = path.join(reportPath, 'dissertation_report.html');
+  res.sendFile(reportFile, (err) => {
+    if (err && !res.headersSent) {
+      res.status(404).send('Dissertation report not found');
+    }
+  });
 });
 
 // API routes
@@ -50,7 +55,7 @@ app.use(notFoundHandler);
 app.use(errorHandler);
 
 // Start server
-const PORT = env.PORT || 5000;
+const PORT = env.PORT || 3001;
 app.listen(PORT, () => {
   logger.info(`🚀 Server running on port ${PORT}`);
   logger.info(`📊 Environment: ${env.NODE_ENV}`);
@@ -58,13 +63,12 @@ app.listen(PORT, () => {
   logger.info(`📈 Using Yahoo Finance API for real-time stock data`);
   logger.info(`✅ Server is ready to accept requests`);
   
-  // Auto-open the dissertation report page when running in dev mode
-  if (env.NODE_ENV === 'development') {
+  // Auto-open dissertation report only in Windows dev mode
+  if (env.NODE_ENV === 'development' && process.platform === 'win32') {
     const reportUrl = `http://localhost:${PORT}/report`;
     logger.info(`📄 Dissertation Report available at: ${reportUrl}`);
     exec(`start ${reportUrl}`);
   }
-  console.log('🔄 Restarted backend to pick up new .env credentials');
 });
 
 // Graceful shutdown
