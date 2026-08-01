@@ -2,7 +2,7 @@ services:
   # 1. Node.js Express Backend Service
   - type: web
     name: stock-ai-backend
-    runtime: node
+    env: node
     plan: free
     rootDir: backend
     buildCommand: npm install && npm run build
@@ -16,13 +16,11 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
-      - key: MONGODB_URI
-        sync: false
 
   # 2. Python Flask ML Service
   - type: web
     name: stock-ai-ml-service
-    runtime: python
+    env: python
     plan: free
     rootDir: backend/ml_service
     buildCommand: pip install -r requirements.txt
