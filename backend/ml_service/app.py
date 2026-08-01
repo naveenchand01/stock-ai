@@ -119,6 +119,6 @@ def intraday_endpoint():
         return jsonify({"error": "Failed to fetch intraday data", "details": str(e)}), 500
 
 if __name__ == "__main__":
-    # Run the server on port 5000
-    print("Starting Flask Stock AI Prediction Server on http://localhost:5000...")
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    port = int(os.environ.get("PORT", 5000))
+    print(f"Starting Flask Stock AI Prediction Server on port {port}...")
+    app.run(host='0.0.0.0', port=port, debug=False)
