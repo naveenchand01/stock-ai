@@ -434,17 +434,6 @@ const Landing = () => {
       {/* Footer */}
       <footer className="py-12 border-t border-border/50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            <h3 className="text-lg font-semibold mb-2">Group 4</h3>
-            <p className="text-sm text-muted-foreground mb-6">Team Members</p>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 max-w-4xl mx-auto">
-              {["Naveen Chand", "Pratham Singh", "Suman Mandal", "Lokesh Ghosh", "Riya Singh", "Santanu Ghosh"].map((member) => (
-                <div key={member} className="glass-card p-3 rounded-lg">
-                  <p className="text-sm font-medium">{member}</p>
-                </div>
-              ))}
-            </div>
-          </div>
           <div className="text-center text-sm text-muted-foreground">
             <p>© 2026 Market Navigator AI. For informational purposes only. Not financial advice.</p>
           </div>
