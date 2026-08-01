@@ -5,7 +5,7 @@ services:
     env: node
     plan: free
     rootDir: backend
-    buildCommand: npm install --include=dev && npm run build
+    buildCommand: npm install --production=false && npm run build
     startCommand: npm start
     envVars:
       - key: PORT
@@ -23,7 +23,7 @@ services:
     env: python
     plan: free
     rootDir: backend/ml_service
-    buildCommand: pip install -r requirements.txt
+    buildCommand: pip install --no-cache-dir -r requirements.txt
     startCommand: gunicorn app:app
     envVars:
       - key: PORT
