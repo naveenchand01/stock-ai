@@ -4,7 +4,8 @@ import logger from '../utils/logger';
 const router = Router();
 
 // Python ML Service URL
-const PYTHON_SERVICE_URL = 'http://localhost:5000/predict';
+const ML_SERVICE_BASE = process.env.ML_SERVICE_URL || 'http://localhost:5000';
+const PYTHON_SERVICE_URL = `${ML_SERVICE_BASE.replace(/\/$/, '')}/predict`;
 
 /**
  * GET /api/forecast/:symbol

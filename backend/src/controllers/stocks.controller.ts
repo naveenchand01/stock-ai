@@ -258,7 +258,8 @@ export class StocksController {
         return res.status(400).json({ error: 'Symbol is required' });
       }
 
-      const response = await fetch(`http://localhost:5000/intraday?symbol=${symbol}`);
+      const mlServiceUrl = (process.env.ML_SERVICE_URL || 'http://localhost:5000').replace(/\/$/, '');
+      const response = await fetch(`${mlServiceUrl}/intraday?symbol=${symbol}`);
       if (!response.ok) {
         throw new Error('Failed to fetch intraday data from ML service');
       }

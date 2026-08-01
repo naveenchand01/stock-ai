@@ -14,6 +14,8 @@ services:
         sync: false
       - key: GEMINI_API_KEY
         sync: false
+      - key: ML_SERVICE_URL
+        value: https://stock-ai-ml-service.onrender.com
 
   # 2. Python Flask ML Service
   - type: web
