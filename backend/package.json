@@ -1,7 +1,7 @@
 {
   "name": "market-navigator-backend",
   "version": "1.0.0",
-  "description": "Backend API for Market Navigator AI with Groww API integration",
+  "description": "Backend API for Stock AI with Groww API integration",
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --exec tsx src/server.ts",

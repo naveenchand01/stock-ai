@@ -14,7 +14,7 @@ class PushNotificationService {
                 const privateKey = env.VAPID_PRIVATE_KEY.trim();
 
                 webpush.setVapidDetails(
-                    'mailto:support@marketnavigator.ai',
+                    'mailto:support@stockai.com',
                     publicKey,
                     privateKey
                 );

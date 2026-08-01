@@ -50,7 +50,7 @@ class EmailService {
     try {
       const { to, alerts } = options;
 
-      const subject = `🚨 Market Navigator: ${alerts.length} New Alerts Triggered!`;
+      const subject = `🚨 Stock AI: ${alerts.length} New Alerts Triggered!`;
 
       const alertsHtml = alerts.map(a => `
               <div class="alert-box">
@@ -76,12 +76,12 @@ class EmailService {
         </head>
         <body>
           <div class="container">
-            <h1 class="header">📊 Market Navigator AI - Daily Alert Digest</h1>
+            <h1 class="header">📊 Stock AI - Daily Alert Digest</h1>
             
             ${alertsHtml}
 
             <div class="footer">
-              <p>You received this email because you configured alerts in Market Navigator AI.</p>
+              <p>You received this email because you configured alerts in Stock AI.</p>
               <p>To manage your notifications, visit your dashboard.</p>
             </div>
           </div>
@@ -89,7 +89,7 @@ class EmailService {
         </html>
             `;
       await this.transporter.sendMail({
-        from: `"Market Navigator AI" <${env.SMTP_USER}>`,
+        from: `"Stock AI" <${env.SMTP_USER}>`,
         to,
         subject,
         html,

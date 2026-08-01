@@ -42,7 +42,7 @@ class WhatsAppService {
         try {
             const { to, alerts } = options;
 
-            let message = `🚨 *Market Navigator AI - Daily Alert Digest*\n\n`;
+            let message = `🚨 *Stock AI - Daily Alert Digest*\n\n`;
 
             alerts.forEach(a => {
                 message += `*${a.symbol}* has ${a.condition} your threshold!\n`;

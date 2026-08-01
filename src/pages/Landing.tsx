@@ -167,7 +167,7 @@ const Landing = () => {
               <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
                 <span className="text-primary-foreground font-bold text-sm">AI</span>
               </div>
-              <span className="font-semibold text-lg">Market Navigator AI</span>
+              <span className="font-semibold text-lg">Stock AI</span>
             </Link>
             <div className="flex items-center gap-4">
               <Button variant="ghost" asChild>
@@ -435,7 +435,7 @@ const Landing = () => {
       <footer className="py-12 border-t border-border/50">
         <div className="container mx-auto px-4">
           <div className="text-center text-sm text-muted-foreground">
-            <p>© 2026 Market Navigator AI. For informational purposes only. Not financial advice.</p>
+            <p>© 2026 Stock AI. For informational purposes only. Not financial advice.</p>
           </div>
         </div>
       </footer>
