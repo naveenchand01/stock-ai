@@ -8,8 +8,6 @@ services:
     buildCommand: npm install && npm run build
     startCommand: npm start
     envVars:
-      - key: PORT
-        value: 3001
       - key: NODE_ENV
         value: production
       - key: FRONTEND_URL
@@ -24,7 +22,4 @@ services:
     plan: free
     rootDir: backend/ml_service
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn app:app
-    envVars:
-      - key: PORT
-        value: 5000
+    startCommand: gunicorn --bind 0.0.0.0:$PORT app:app
