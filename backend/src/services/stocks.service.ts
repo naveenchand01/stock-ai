@@ -158,7 +158,7 @@ class StocksService {
           const cacheKey = `quote:${(symbolData as any).original || quote.symbol}`;
           cacheService.set(cacheKey, stock, 60);
         } catch (error) {
-          logger.error(`Failed to transform quote for ${(symbolData as any).original || quote.symbol}:`, error);
+          logger.debug(`Failed to transform quote for ${(symbolData as any).original || quote.symbol}:`, error);
         }
       }
 
@@ -193,7 +193,7 @@ class StocksService {
 
       return stocks;
     } catch (error) {
-      logger.error('Failed to fetch batch quotes:', error);
+      logger.debug('Failed to fetch batch quotes, relying on fallback data:', error);
       throw error;
     }
   }
@@ -344,7 +344,7 @@ class StocksService {
               yahooQuotes.push(quote);
             }
           } catch (individualError) {
-            logger.error(`Failed to fetch individual index quote for ${symbolData.displayName}:`, individualError);
+            logger.debug(`Failed to fetch individual index quote for ${symbolData.displayName}:`, individualError);
           }
         }
       }
@@ -361,7 +361,7 @@ class StocksService {
           const index = transformYahooIndexToMarketIndex(quote, displayName, symbolData.yahoo);
           indices.push(index);
         } catch (error) {
-          logger.error(`Failed to transform index ${displayName}:`, error);
+          logger.debug(`Failed to transform index ${displayName}:`, error);
         }
       }
 
