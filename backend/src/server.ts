@@ -45,6 +45,15 @@ app.get('/report', (req, res) => {
   });
 });
 
+// Root route
+app.get('/', (req, res) => {
+  res.json({
+    name: 'Stock AI Backend API',
+    status: 'online',
+    healthCheck: '/api/health',
+  });
+});
+
 // API routes
 app.use('/api', routes);
 
