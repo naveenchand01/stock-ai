@@ -20,7 +20,14 @@ export const stocksApi = {
    * Get quotes for multiple stocks
    */
   getWatchlist: async (symbols: string[]): Promise<Stock[]> => {
-    return apiClient.post('/stocks/batch', { symbols });
+    if (!symbols || symbols.length === 0) return [];
+    try {
+      const res: any = await apiClient.post('/stocks/batch', { symbols });
+      return Array.isArray(res) ? res : (res?.data || []);
+    } catch (err) {
+      console.warn('Failed to fetch watchlist batch:', err);
+      return [];
+    }
   },
 
   /**

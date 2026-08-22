@@ -124,7 +124,7 @@ const Dashboard = () => {
             </div>
             <h3 className="font-semibold mb-2">Failed to load market data</h3>
             <p className="text-sm text-muted-foreground mb-4">
-              Please check if the backend server is running on port 3001
+              Please check your network connection or verify that the backend API is reachable.
             </p>
             <Button onClick={() => window.location.reload()}>Retry</Button>
           </motion.div>
