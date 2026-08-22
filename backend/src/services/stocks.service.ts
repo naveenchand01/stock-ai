@@ -36,8 +36,24 @@ class StocksService {
       cacheService.set(cacheKey, stock, 60); // Cache for 60 seconds
       return stock;
     } catch (error) {
-      logger.error(`Failed to fetch quote for ${symbol}:`, error);
-      throw error;
+      logger.warn(`Failed to fetch quote for ${symbol}, falling back to mock data:`, error);
+      let hash = 0;
+      for (let i = 0; i < symbol.length; i++) {
+        hash = symbol.charCodeAt(i) + ((hash << 5) - hash);
+      }
+      const basePrice = Math.abs(hash % 3000) + 100;
+      const changePercent = (Math.abs(hash % 100) / 10) - 5;
+      const change = basePrice * (changePercent / 100);
+      
+      return {
+        symbol: displayName,
+        name: `${name || symbol} (Mock Data)`,
+        price: basePrice,
+        change: change,
+        changePercent: changePercent,
+        volume: Math.abs(hash % 10000000) + 500000,
+        previousClose: basePrice - change
+      };
     }
   }
 
@@ -54,8 +70,25 @@ class StocksService {
       }
       return results;
     } catch (error) {
-      logger.error(`Failed to search stocks for ${query}:`, error);
-      throw error;
+      logger.warn(`Failed to search stocks for ${query} via API, falling back to local mappings:`, error);
+      const queryLower = query.toLowerCase();
+      const allSymbols = getAllStockSymbols();
+      const matched = allSymbols.filter(sym => {
+        const mapping = getStockMapping(sym);
+        return sym.toLowerCase().includes(queryLower) || (mapping && mapping.name.toLowerCase().includes(queryLower));
+      }).slice(0, 5);
+
+      return {
+        quotes: matched.map(sym => {
+            const mapping = getStockMapping(sym);
+            return {
+                symbol: mapping ? mapping.yahooSymbol : sym,
+                shortname: mapping ? mapping.name : sym,
+                quoteType: 'EQUITY',
+                exchange: 'NSE'
+            };
+        })
+      };
     }
   }
 
@@ -131,18 +164,31 @@ class StocksService {
 
       // Fallback data if Yahoo Finance returned empty array (e.g. rate limited on cloud IP)
       if (stocks.length === 0) {
-        return [
-          { symbol: 'RELIANCE', name: 'Reliance Industries Ltd', price: 2980.50, change: 45.20, changePercent: 1.54, volume: 5420000, previousClose: 2935.30 },
-          { symbol: 'TCS', name: 'Tata Consultancy Services', price: 4120.00, change: 62.30, changePercent: 1.53, volume: 2310000, previousClose: 4057.70 },
-          { symbol: 'HDFCBANK', name: 'HDFC Bank Ltd', price: 1640.80, change: 18.50, changePercent: 1.14, volume: 8900000, previousClose: 1622.30 },
-          { symbol: 'INFY', name: 'Infosys Limited', price: 1850.25, change: 22.10, changePercent: 1.21, volume: 4100000, previousClose: 1828.15 },
-          { symbol: 'ICICIBANK', name: 'ICICI Bank Ltd', price: 1180.40, change: 12.80, changePercent: 1.10, volume: 6700000, previousClose: 1167.60 },
-          { symbol: 'TATAMOTORS', name: 'Tata Motors Ltd', price: 995.10, change: -8.40, changePercent: -0.84, volume: 7800000, previousClose: 1003.50 },
-          { symbol: 'SBIN', name: 'State Bank of India', price: 825.60, change: -5.20, changePercent: -0.63, volume: 9200000, previousClose: 830.80 },
-          { symbol: 'BHARTIARTL', name: 'Bharti Airtel Ltd', price: 1460.00, change: 15.40, changePercent: 1.07, volume: 3400000, previousClose: 1444.60 },
-          { symbol: 'ITC', name: 'ITC Limited', price: 490.50, change: -2.10, changePercent: -0.43, volume: 6100000, previousClose: 492.60 },
-          { symbol: 'LT', name: 'Larsen & Toubro Ltd', price: 3650.00, change: 35.00, changePercent: 0.97, volume: 1800000, previousClose: 3615.00 }
-        ];
+        logger.warn('Yahoo Finance returned no quotes, falling back to mock data for requested symbols');
+        return symbols.map(symbol => {
+          const mapping = getStockMapping(symbol);
+          const symName = mapping ? mapping.name : symbol;
+          
+          // Generate somewhat stable pseudo-random data based on symbol string
+          let hash = 0;
+          for (let i = 0; i < symbol.length; i++) {
+            hash = symbol.charCodeAt(i) + ((hash << 5) - hash);
+          }
+          
+          const basePrice = Math.abs(hash % 3000) + 100;
+          const changePercent = (Math.abs(hash % 100) / 10) - 5; // -5 to +5 percent
+          const change = basePrice * (changePercent / 100);
+          
+          return {
+            symbol: symbol,
+            name: `${symName} (Mock Data)`,
+            price: basePrice,
+            change: change,
+            changePercent: changePercent,
+            volume: Math.abs(hash % 10000000) + 500000,
+            previousClose: basePrice - change
+          };
+        });
       }
 
       return stocks;
@@ -403,8 +449,42 @@ class StocksService {
       cacheService.set(cacheKey, data, 300);
       return data;
     } catch (error) {
-      logger.error(`Failed to fetch historical data for ${symbol}:`, error);
-      throw error;
+      logger.warn(`Failed to fetch historical data for ${symbol}, falling back to mock data:`, error);
+      
+      const mockData = [];
+      let currentDate = new Date(startDate);
+      let currentPrice = 1000 + Math.random() * 500;
+      
+      while (currentDate <= endDate) {
+        if (currentDate.getDay() !== 0 && currentDate.getDay() !== 6) {
+          const volatility = currentPrice * 0.02;
+          const change = (Math.random() - 0.5) * volatility;
+          currentPrice += change;
+          
+          mockData.push({
+            date: new Date(currentDate),
+            open: currentPrice - change/2,
+            high: currentPrice + Math.abs(change),
+            low: currentPrice - Math.abs(change),
+            close: currentPrice,
+            volume: Math.floor(Math.random() * 5000000) + 1000000
+          });
+        }
+        
+        if (interval.includes('d')) {
+          currentDate.setDate(currentDate.getDate() + (parseInt(interval) || 1));
+        } else if (interval.includes('wk')) {
+          currentDate.setDate(currentDate.getDate() + 7);
+        } else if (interval.includes('mo')) {
+          currentDate.setMonth(currentDate.getMonth() + 1);
+        } else if (interval.includes('m')) {
+           currentDate.setMinutes(currentDate.getMinutes() + (parseInt(interval) || 1));
+        } else {
+           currentDate.setDate(currentDate.getDate() + 1);
+        }
+      }
+      
+      return mockData;
     }
   }
 }

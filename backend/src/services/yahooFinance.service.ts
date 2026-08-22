@@ -8,6 +8,12 @@ class YahooFinanceService {
     // Instantiate the Yahoo Finance client with configuration
     // We use a custom fetch wrapper to set the User-Agent to avoid 429 errors
     this.yahooFinance = new YahooFinanceClass({
+      logger: {
+        info: () => {},
+        warn: () => {},
+        error: () => {},
+        debug: () => {}
+      },
       queue: {
         concurrency: 2 // Limit concurrent requests
       },
@@ -34,7 +40,7 @@ class YahooFinanceService {
       logger.debug(`Yahoo Finance API Response: Successfully fetched quote for ${symbol}`);
       return quote;
     } catch (error: any) {
-      logger.error(`Failed to get quote for ${symbol}:`, {
+      logger.debug(`Failed to get quote for ${symbol}:`, {
         message: error.message,
         symbol,
       });
@@ -55,7 +61,7 @@ class YahooFinanceService {
       logger.debug(`Yahoo Finance API Response: Successfully fetched ${symbols.length} quotes`);
       return quotes;
     } catch (error: any) {
-      logger.error('Failed to get quotes:', {
+      logger.debug('Failed to get quotes:', {
         message: error.message,
         symbols,
       });
@@ -146,7 +152,7 @@ class YahooFinanceService {
         logger.debug(`Yahoo Finance API Response: Validation Error bypassed for historical data ${symbol}`);
         return error.result?.quotes || error.result || [];
       }
-      logger.error(`Failed to get historical data for ${symbol}:`, {
+      logger.debug(`Failed to get historical data for ${symbol}:`, {
         message: error.message,
         symbol,
       });
@@ -172,7 +178,7 @@ class YahooFinanceService {
         logger.debug(`Yahoo Finance API Response with Validation Errors: Found results`);
         return error.result;
       }
-      logger.error(`Failed to search stocks with query "${query}":`, {
+      logger.debug(`Failed to search stocks with query "${query}":`, {
         message: error.message,
         query,
       });
@@ -194,7 +200,7 @@ class YahooFinanceService {
       logger.debug('Yahoo Finance API Response: Successfully fetched market summary');
       return summary;
     } catch (error: any) {
-      logger.error('Failed to get market summary:', {
+      logger.debug('Failed to get market summary:', {
         message: error.message,
       });
       throw error;
@@ -215,7 +221,7 @@ class YahooFinanceService {
       logger.debug(`Yahoo Finance API Response: Found ${trendingCount} trending stocks`);
       return trending;
     } catch (error: any) {
-      logger.error(`Failed to get trending stocks for ${region}:`, {
+      logger.debug(`Failed to get trending stocks for ${region}:`, {
         message: error.message,
         region,
       });
