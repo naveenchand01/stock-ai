@@ -397,9 +397,10 @@ class StocksService {
     const mapping = getStockMapping(symbol);
     const yahooSymbol = mapping ? mapping.yahooSymbol : symbol;
 
+    let endDate = customEndDate ? new Date(customEndDate) : new Date();
+    let startDate = customStartDate ? new Date(customStartDate) : new Date();
+
     try {
-      let endDate = customEndDate ? new Date(customEndDate) : new Date();
-      let startDate = customStartDate ? new Date(customStartDate) : new Date();
 
       if (!customStartDate && !customEndDate) {
         // Calculate date range based on period

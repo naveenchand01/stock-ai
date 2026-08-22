@@ -12,7 +12,8 @@ class YahooFinanceService {
         info: () => {},
         warn: () => {},
         error: () => {},
-        debug: () => {}
+        debug: () => {},
+        dir: () => {}
       },
       queue: {
         concurrency: 2 // Limit concurrent requests
