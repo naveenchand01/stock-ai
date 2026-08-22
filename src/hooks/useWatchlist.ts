@@ -35,7 +35,7 @@ export function useWatchlist() {
                     setWatchlist(profile.watchlist || []);
                 } catch (error) {
                     console.error('Failed to fetch watchlist from Supabase:', error);
-                    toast.error('Failed to load your watchlist');
+                    // Silently fall back to local storage watchlist without showing a toast error
                 } finally {
                     setLoading(false);
                 }
