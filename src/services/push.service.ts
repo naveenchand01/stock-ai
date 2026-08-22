@@ -1,6 +1,7 @@
 /**
  * Service for managing browser push notifications
  */
+import { apiClient } from './api';
 
 let publicVapidKey: string | null = null;
 let pushSubscription: PushSubscription | null = null;
@@ -33,14 +34,14 @@ const getPublicKey = async (): Promise<string> => {
         return publicVapidKey;
     }
 
-    const response = await fetch('http://localhost:3001/api/notifications/vapid-key');
-    const data = await response.json();
+    const data: any = await apiClient.get('/notifications/vapid-key');
+    const publicKey = data?.publicKey || data;
 
-    if (!data.publicKey) {
+    if (!publicKey) {
         throw new Error('VAPID public key not available');
     }
 
-    publicVapidKey = data.publicKey;
+    publicVapidKey = publicKey;
     return publicVapidKey;
 };
 

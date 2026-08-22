@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, RefreshCw, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { aiApi } from '@/services/ai.api';
 
 interface MarketSummaryProps {
   className?: string;
@@ -18,14 +19,8 @@ export const MarketSummary = ({ className = '' }: MarketSummaryProps) => {
     setError('');
 
     try {
-      const response = await fetch('http://localhost:3001/api/stocks/market-summary');
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch market summary');
-      }
-
-      const result = await response.json();
-      setSummary(result.data.summary);
+      const res = await aiApi.getMarketSummary();
+      setSummary(res);
     } catch (err: any) {
       setError(err.message || 'Failed to load market summary');
     } finally {

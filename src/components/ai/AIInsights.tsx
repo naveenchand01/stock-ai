@@ -3,6 +3,7 @@ import { motion } from 'framer-motion';
 import { Sparkles, TrendingUp, Loader2 } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { aiApi } from '@/services/ai.api';
 
 interface AIInsightsProps {
   symbol: string;
@@ -20,18 +21,10 @@ export const AIInsights = ({ symbol, type = 'summary', className = '' }: AIInsig
     setError('');
 
     try {
-      const endpoint = type === 'summary'
-        ? `/api/stocks/ai-summary/${symbol}`
-        : `/api/stocks/trading-insights/${symbol}`;
-
-      const response = await fetch(`http://localhost:3001${endpoint}`);
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch AI insights');
-      }
-
-      const result = await response.json();
-      setContent(type === 'summary' ? result.data.summary : result.data.insights);
+      const res = type === 'summary'
+        ? await aiApi.getStockSummary(symbol)
+        : await aiApi.getTradingInsights(symbol);
+      setContent(res);
     } catch (err: any) {
       setError(err.message || 'Failed to load AI insights');
     } finally {
